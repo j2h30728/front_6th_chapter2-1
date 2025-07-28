@@ -209,10 +209,6 @@ function main() {
   root.appendChild(gridContainer);
   root.appendChild(manualToggle);
   root.appendChild(manualOverlay);
-  let initStock = 0;
-  for (let i = 0; i < prodList.length; i++) {
-    initStock += prodList[i].q;
-  }
   onUpdateSelectOptions();
   handleCalculateCartStuff();
   const lightningDelay = Math.random() * 10000;
@@ -231,8 +227,6 @@ function main() {
   }, lightningDelay);
   setTimeout(function () {
     setInterval(function () {
-      if (cartDisp.children.length === 0) {
-      }
       if (lastSel) {
         let suggest = null;
         for (let k = 0; k < prodList.length; k++) {
@@ -591,19 +585,9 @@ const doRenderBonusPoints = function () {
     }
   }
 };
-function onGetStockTotal() {
-  let totalStock = 0;
-  for (let i = 0; i < prodList.length; i++) {
-    const currentProduct = prodList[i];
-    totalStock += currentProduct.q;
-  }
-  return totalStock;
-}
+
 const handleStockInfoUpdate = function () {
   let infoMsg = '';
-  const totalStock = onGetStockTotal();
-  if (totalStock < 30) {
-  }
   prodList.forEach(function (item) {
     if (item.q < 5) {
       if (item.q > 0) {
@@ -616,17 +600,6 @@ const handleStockInfoUpdate = function () {
   stockInfo.textContent = infoMsg;
 };
 function doUpdatePricesInCart() {
-  let totalCount = 0,
-    j = 0;
-  while (cartDisp.children[j]) {
-    const qty = cartDisp.children[j].querySelector('.quantity-number');
-    totalCount += qty ? parseInt(qty.textContent) : 0;
-    j++;
-  }
-  totalCount = 0;
-  for (j = 0; j < cartDisp.children.length; j++) {
-    totalCount += parseInt(cartDisp.children[j].querySelector('.quantity-number').textContent);
-  }
   const cartItems = cartDisp.children;
   for (let i = 0; i < cartItems.length; i++) {
     const itemId = cartItems[i].id;
@@ -807,8 +780,6 @@ cartDisp.addEventListener('click', function (event) {
       const remQty = parseInt(qtyElem.textContent);
       prod.q += remQty;
       itemElem.remove();
-    }
-    if (prod && prod.q < 5) {
     }
     handleCalculateCartStuff();
     onUpdateSelectOptions();
