@@ -1,5 +1,5 @@
-import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
-import userEvent from "@testing-library/user-event";
+import userEvent from '@testing-library/user-event';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('basic 테스트', () => {
   // 공통 헬퍼 함수
@@ -28,8 +28,8 @@ describe('basic 테스트', () => {
   };
 
   describe.each([
-    { type: 'origin', loadFile: () => import('../../main.original.js'), },
-    { type: 'basic', loadFile: () => import('../main.basic.js'), },
+    { type: 'origin', loadFile: () => import('../../main.original.js') },
+    { type: 'basic', loadFile: () => import('../main.basic.js') },
   ])('$type 장바구니 상세 기능 테스트', ({ loadFile }) => {
     let sel, addBtn, cartDisp, sum, stockInfo, itemCount, loyaltyPoints, discountInfo;
 
@@ -39,7 +39,7 @@ describe('basic 테스트', () => {
 
       // 전체 DOM 재초기화
       document.body.innerHTML = '<div id="app"></div>';
-      
+
       // 모듈 캐시 클리어 및 재로드
       vi.resetModules();
       await loadFile();
@@ -68,7 +68,7 @@ describe('basic 테스트', () => {
             { id: 'p2', name: '생산성 폭발 마우스', price: '20000원', stock: 30, discount: 15 },
             { id: 'p3', name: '거북목 탈출 모니터암', price: '30000원', stock: 20, discount: 20 },
             { id: 'p4', name: '에러 방지 노트북 파우치', price: '15000원', stock: 0, discount: 5 },
-            { id: 'p5', name: '코딩할 때 듣는 Lo-Fi 스피커', price: '25000원', stock: 10, discount: 25 }
+            { id: 'p5', name: '코딩할 때 듣는 Lo-Fi 스피커', price: '25000원', stock: 10, discount: 25 },
           ];
 
           expect(sel.options.length).toBe(5);
@@ -353,9 +353,9 @@ describe('basic 테스트', () => {
         it('할인 중인 상품 강조 표시 확인', async () => {
           // 현재 화요일 테스트 또는 일반 상황에서의 강조 표시만 확인
           const options = Array.from(sel.options);
-          
+
           // 품절 상품이 비활성화되어 있는지 확인
-          const disabledOption = options.find(opt => opt.disabled);
+          const disabledOption = options.find((opt) => opt.disabled);
           if (disabledOption) {
             expect(disabledOption.textContent).toContain('품절');
           }
@@ -456,7 +456,7 @@ describe('basic 테스트', () => {
         it('재고 초과 시 알림 표시', () => {
           // 재고가 10개인 상품5를 11개 추가 시도
           addItemsToCart(sel, addBtn, 'p5', 11);
-          
+
           // 장바구니에는 10개만 있어야 함
           const qty = getCartItemQuantity(cartDisp, 'p5');
           expect(qty).toBeLessThanOrEqual(10);
@@ -493,9 +493,9 @@ describe('basic 테스트', () => {
 
           const increaseBtn = cartDisp.querySelector('.quantity-change[data-change="1"]');
           const qtyBefore = getCartItemQuantity(cartDisp, 'p5');
-          
+
           await userEvent.click(increaseBtn);
-          
+
           const qtyAfter = getCartItemQuantity(cartDisp, 'p5');
           expect(qtyAfter).toBe(qtyBefore); // 수량이 증가하지 않아야 함
         });
@@ -528,7 +528,7 @@ describe('basic 테스트', () => {
 
           const removeBtn = cartDisp.querySelector('.remove-item');
           await userEvent.click(removeBtn);
-          
+
           // 재고가 복구되어야 하지만 원본 코드에서는 제대로 업데이트되지 않음
         });
       });
@@ -594,7 +594,7 @@ describe('basic 테스트', () => {
         it('장바구니 추가 시 재고 확인', () => {
           // 재고 10개인 상품을 11개 추가 시도
           addItemsToCart(sel, addBtn, 'p5', 11);
-          
+
           // 장바구니에는 최대 재고 수량만큼만 담김
           const qty = getCartItemQuantity(cartDisp, 'p5');
           expect(qty).toBeLessThanOrEqual(10);
