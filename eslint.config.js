@@ -8,6 +8,11 @@ import globals from 'globals'; // 브라우저/Node.js 전역변수 정의 (wind
 import tseslint from 'typescript-eslint'; // TypeScript 코드 검사 및 타입 관련 규칙
 
 export default defineConfig([
+  // 파일 제외 설정
+  {
+    ignores: ['src/main.original.js'], // ESLint 검사에서 제외할 파일
+  },
+
   // 기본 파일 타입 및 언어 설정
   {
     files: ['**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'], // 검사할 파일 확장자 지정
