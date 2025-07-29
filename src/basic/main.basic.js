@@ -110,6 +110,13 @@ const createRightColumn = () => /*html*/ `
   </div>
 `;
 
+const createBulkDiscountHTML = () => /*html*/ `
+  <div class="flex justify-between text-sm tracking-wide text-green-400">
+    <span class="text-xs">🎉 대량구매 할인 (30개 이상)</span>
+    <span class="text-xs">-25%</span>
+  </div>
+`;
+
 const createManualToggleButton = () => /*html*/ `
   <button id="manual-toggle" class="fixed top-4 right-4 bg-black text-white p-3 rounded-full hover:bg-gray-900 transition-colors z-50">
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -370,6 +377,43 @@ const createStockMessage = (item) => {
   return null; // 재고 충분한 경우
 };
 
+// 📊 주문 요약 HTML 헬퍼 함수
+const createSummaryItemHTML = (item, quantity) => /*html*/ `
+  <div class="flex justify-between text-xs tracking-wide text-gray-400">
+    <span>${item.name} x ${quantity}</span>
+    <span>₩${(item.val * quantity).toLocaleString()}</span>
+  </div>
+`;
+
+const createSummarySubtotalHTML = (subtotal) => /*html*/ `
+  <div class="border-t border-white/10 my-3"></div>
+  <div class="flex justify-between text-sm tracking-wide">
+    <span>Subtotal</span>
+    <span>₩${subtotal.toLocaleString()}</span>
+  </div>
+`;
+
+const createItemDiscountHTML = (discountInfo) => /*html*/ `
+  <div class="flex justify-between text-sm tracking-wide text-green-400">
+    <span class="text-xs">${discountInfo.name} (10개↑)</span>
+    <span class="text-xs">-${discountInfo.discount}%</span>
+  </div>
+`;
+
+const createTuesdayDiscountHTML = () => /*html*/ `
+  <div class="flex justify-between text-sm tracking-wide text-purple-400">
+    <span class="text-xs">🌟 화요일 추가 할인</span>
+    <span class="text-xs">-10%</span>
+  </div>
+`;
+
+const createShippingHTML = () => /*html*/ `
+  <div class="flex justify-between text-sm tracking-wide text-gray-400">
+    <span>Shipping</span>
+    <span>Free</span>
+  </div>
+`;
+
 function handleCalculateCartStuff() {
   totalAmt = 0;
   itemCnt = 0;
@@ -457,54 +501,23 @@ function handleCalculateCartStuff() {
       const curItem = prodList.find((product) => product.id === cartItems[i].id);
       const qtyElem = cartItems[i].querySelector('.quantity-number');
       const quantity = parseInt(qtyElem.textContent);
-      const itemTotal = curItem.val * quantity;
-      summaryDetails.innerHTML += /*html*/ `
-        <div class="flex justify-between text-xs tracking-wide text-gray-400">
-          <span>${curItem.name} x ${quantity}</span>
-          <span>₩${itemTotal.toLocaleString()}</span>
-        </div>
-      `;
+
+      summaryDetails.innerHTML += createSummaryItemHTML(curItem, quantity);
     }
-    summaryDetails.innerHTML += /*html*/ `
-      <div class="border-t border-white/10 my-3"></div>
-      <div class="flex justify-between text-sm tracking-wide">
-        <span>Subtotal</span>
-        <span>₩${subTot.toLocaleString()}</span>
-      </div>
-    `;
+    summaryDetails.innerHTML += createSummarySubtotalHTML(subTot);
     if (itemCnt >= 30) {
-      summaryDetails.innerHTML += /*html*/ `
-        <div class="flex justify-between text-sm tracking-wide text-green-400">
-          <span class="text-xs">🎉 대량구매 할인 (30개 이상)</span>
-          <span class="text-xs">-25%</span>
-        </div>
-      `;
+      summaryDetails.innerHTML += createBulkDiscountHTML();
     } else if (itemDiscounts.length > 0) {
       itemDiscounts.forEach(function (item) {
-        summaryDetails.innerHTML += /*html*/ `
-          <div class="flex justify-between text-sm tracking-wide text-green-400">
-            <span class="text-xs">${item.name} (10개↑)</span>
-            <span class="text-xs">-${item.discount}%</span>
-          </div>
-        `;
+        summaryDetails.innerHTML += createItemDiscountHTML(item);
       });
     }
     if (isTuesday) {
       if (totalAmt > 0) {
-        summaryDetails.innerHTML += /*html*/ `
-          <div class="flex justify-between text-sm tracking-wide text-purple-400">
-            <span class="text-xs">🌟 화요일 추가 할인</span>
-            <span class="text-xs">-10%</span>
-          </div>
-        `;
+        summaryDetails.innerHTML += createTuesdayDiscountHTML();
       }
     }
-    summaryDetails.innerHTML += /*html*/ `
-      <div class="flex justify-between text-sm tracking-wide text-gray-400">
-        <span>Shipping</span>
-        <span>Free</span>
-      </div>
-    `;
+    summaryDetails.innerHTML += createShippingHTML();
   }
 
   const totalDiv = document.getElementById('cart-total').querySelector('.text-2xl');
