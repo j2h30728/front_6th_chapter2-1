@@ -580,82 +580,23 @@ function handleCalculateCartStuff() {
 }
 
 const doRenderBonusPoints = function () {
-  let finalPoints;
-  let hasKeyboard;
-  let hasMouse;
-  let hasMonitorArm;
+  const ptsTag = document.getElementById('loyalty-points');
+  if (!ptsTag) return;
 
   const cartDisp = document.getElementById('cart-items');
   if (cartDisp.children.length === 0) {
-    document.getElementById('loyalty-points').style.display = 'none';
+    ptsTag.style.display = 'none';
     return;
   }
-  const basePoints = Math.floor(totalAmt / 1000);
-  finalPoints = 0;
-  const pointsDetail = [];
-  if (basePoints > 0) {
-    finalPoints = basePoints;
-    pointsDetail.push('기본: ' + basePoints + 'p');
-  }
-  if (new Date().getDay() === 2) {
-    if (basePoints > 0) {
-      finalPoints = basePoints * 2;
-      pointsDetail.push('화요일 2배');
-    }
-  }
-  hasKeyboard = false;
-  hasMouse = false;
-  hasMonitorArm = false;
-  const nodes = cartDisp.children;
-  for (const node of nodes) {
-    const product = prodList.find((item) => item.id === node.id);
-    if (!product) continue;
-    if (product.id === PRODUCT_ONE) {
-      hasKeyboard = true;
-    } else if (product.id === p2) {
-      hasMouse = true;
-    } else if (product.id === product_3) {
-      hasMonitorArm = true;
-    }
-  }
-  if (hasKeyboard && hasMouse) {
-    finalPoints = finalPoints + 50;
-    pointsDetail.push('키보드+마우스 세트 +50p');
-  }
-  if (hasKeyboard && hasMouse && hasMonitorArm) {
-    finalPoints = finalPoints + 100;
-    pointsDetail.push('풀세트 구매 +100p');
-  }
-  if (itemCnt >= 30) {
-    finalPoints = finalPoints + 100;
-    pointsDetail.push('대량구매(30개+) +100p');
+
+  const { finalPoints, pointsDetail } = calculateBonusPoints();
+
+  if (finalPoints > 0) {
+    ptsTag.innerHTML = createBonusPointsHTML(finalPoints, pointsDetail);
+    ptsTag.style.display = 'block';
   } else {
-    if (itemCnt >= 20) {
-      finalPoints = finalPoints + 50;
-      pointsDetail.push('대량구매(20개+) +50p');
-    } else {
-      if (itemCnt >= 10) {
-        finalPoints = finalPoints + 20;
-        pointsDetail.push('대량구매(10개+) +20p');
-      }
-    }
-  }
-  const bonusPts = finalPoints;
-  const ptsTag = document.getElementById('loyalty-points');
-  if (ptsTag) {
-    if (bonusPts > 0) {
-      ptsTag.innerHTML =
-        '<div>적립 포인트: <span class="font-bold">' +
-        bonusPts +
-        'p</span></div>' +
-        '<div class="text-2xs opacity-70 mt-1">' +
-        pointsDetail.join(', ') +
-        '</div>';
-      ptsTag.style.display = 'block';
-    } else {
-      ptsTag.textContent = '적립 포인트: 0p';
-      ptsTag.style.display = 'block';
-    }
+    ptsTag.textContent = '적립 포인트: 0p';
+    ptsTag.style.display = 'block';
   }
 };
 
@@ -669,6 +610,81 @@ const handleStockInfoUpdate = function () {
   const stockInfo = document.getElementById('stock-status');
   stockInfo.textContent = stockMessages.join('\n');
 };
+
+// 🎁 포인트 계산 헬퍼 함수
+const calculateBonusPoints = () => {
+  const cartDisp = document.getElementById('cart-items');
+  const cartItems = Array.from(cartDisp.children);
+
+  if (cartItems.length === 0) {
+    return { finalPoints: 0, pointsDetail: [] };
+  }
+
+  const basePoints = Math.floor(totalAmt / 1000);
+  let finalPoints = 0;
+  const pointsDetail = [];
+
+  // 기본 포인트
+  if (basePoints > 0) {
+    finalPoints = basePoints;
+    pointsDetail.push('기본: ' + basePoints + 'p');
+  }
+
+  // 화요일 2배 포인트
+  const isTuesday = new Date().getDay() === 2;
+  if (isTuesday && basePoints > 0) {
+    finalPoints = basePoints * 2;
+    pointsDetail.push('화요일 2배');
+  }
+
+  // 세트 구매 보너스 계산
+  const productTypes = {
+    hasKeyboard: false,
+    hasMouse: false,
+    hasMonitorArm: false,
+  };
+
+  cartItems.forEach((cartItem) => {
+    const product = prodList.find((item) => item.id === cartItem.id);
+    if (!product) return;
+
+    if (product.id === PRODUCT_ONE) productTypes.hasKeyboard = true;
+    else if (product.id === p2) productTypes.hasMouse = true;
+    else if (product.id === product_3) productTypes.hasMonitorArm = true;
+  });
+
+  // 키보드 + 마우스 세트 보너스
+  if (productTypes.hasKeyboard && productTypes.hasMouse) {
+    finalPoints += 50;
+    pointsDetail.push('키보드+마우스 세트 +50p');
+  }
+
+  // 풀세트 보너스
+  if (productTypes.hasKeyboard && productTypes.hasMouse && productTypes.hasMonitorArm) {
+    finalPoints += 100;
+    pointsDetail.push('풀세트 구매 +100p');
+  }
+
+  // 수량별 보너스
+  if (itemCnt >= 30) {
+    finalPoints += 100;
+    pointsDetail.push('대량구매(30개+) +100p');
+  } else if (itemCnt >= 20) {
+    finalPoints += 50;
+    pointsDetail.push('대량구매(20개+) +50p');
+  } else if (itemCnt >= 10) {
+    finalPoints += 20;
+    pointsDetail.push('대량구매(10개+) +20p');
+  }
+
+  return { finalPoints, pointsDetail };
+};
+
+// 🎁 포인트 관련 HTML 헬퍼 함수
+const createBonusPointsHTML = (points, details) => /*html*/ `
+  <div>적립 포인트: <span class="font-bold">${points}p</span></div>
+  <div class="text-2xs opacity-70 mt-1">${details.join(', ')}</div>
+`;
 
 function doUpdatePricesInCart() {
   const cartDisp = document.getElementById('cart-items');
