@@ -1,61 +1,60 @@
-let prodList;
-let bonusPts = 0;
-let stockInfo;
 let itemCnt;
 let lastSel;
-let sel;
-let addBtn;
 let totalAmt = 0;
+
 const PRODUCT_ONE = 'p1';
 const p2 = 'p2';
 const product_3 = 'p3';
 const p4 = 'p4';
 const PRODUCT_5 = `p5`;
-let cartDisp;
+
+const prodList = [
+  {
+    id: PRODUCT_ONE,
+    name: '버그 없애는 키보드',
+    val: 10000,
+    originalVal: 10000,
+    q: 50,
+    onSale: false,
+    suggestSale: false,
+  },
+  { id: p2, name: '생산성 폭발 마우스', val: 20000, originalVal: 20000, q: 30, onSale: false, suggestSale: false },
+  {
+    id: product_3,
+    name: '거북목 탈출 모니터암',
+    val: 30000,
+    originalVal: 30000,
+    q: 20,
+    onSale: false,
+    suggestSale: false,
+  },
+  {
+    id: p4,
+    name: '에러 방지 노트북 파우치',
+    val: 15000,
+    originalVal: 15000,
+    q: 0,
+    onSale: false,
+    suggestSale: false,
+  },
+  {
+    id: PRODUCT_5,
+    name: `코딩할 때 듣는 Lo-Fi 스피커`,
+    val: 25000,
+    originalVal: 25000,
+    q: 10,
+    onSale: false,
+    suggestSale: false,
+  },
+];
+
 function main() {
   totalAmt = 0;
   itemCnt = 0;
   lastSel = null;
-  prodList = [
-    {
-      id: PRODUCT_ONE,
-      name: '버그 없애는 키보드',
-      val: 10000,
-      originalVal: 10000,
-      q: 50,
-      onSale: false,
-      suggestSale: false,
-    },
-    { id: p2, name: '생산성 폭발 마우스', val: 20000, originalVal: 20000, q: 30, onSale: false, suggestSale: false },
-    {
-      id: product_3,
-      name: '거북목 탈출 모니터암',
-      val: 30000,
-      originalVal: 30000,
-      q: 20,
-      onSale: false,
-      suggestSale: false,
-    },
-    {
-      id: p4,
-      name: '에러 방지 노트북 파우치',
-      val: 15000,
-      originalVal: 15000,
-      q: 0,
-      onSale: false,
-      suggestSale: false,
-    },
-    {
-      id: PRODUCT_5,
-      name: `코딩할 때 듣는 Lo-Fi 스피커`,
-      val: 25000,
-      originalVal: 25000,
-      q: 10,
-      onSale: false,
-      suggestSale: false,
-    },
-  ];
+
   const root = document.getElementById('app');
+
   const header = document.createElement('div');
   header.className = 'mb-8';
   header.innerHTML = `
@@ -63,30 +62,39 @@ function main() {
     <div class="text-5xl tracking-tight leading-none">Shopping Cart</div>
     <p id="item-count" class="text-sm text-gray-500 font-normal mt-3">🛍️ 0 items in cart</p>
   `;
-  sel = document.createElement('select');
+
+  const sel = document.createElement('select');
   sel.id = 'product-select';
+  sel.className = 'w-full p-3 border border-gray-300 rounded-lg text-base mb-3';
+
   const gridContainer = document.createElement('div');
+  gridContainer.className = 'grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 flex-1 overflow-hidden';
+
   const leftColumn = document.createElement('div');
   leftColumn['className'] = 'bg-white border border-gray-200 p-8 overflow-y-auto';
+
   const selectorContainer = document.createElement('div');
   selectorContainer.className = 'mb-6 pb-6 border-b border-gray-200';
-  sel.className = 'w-full p-3 border border-gray-300 rounded-lg text-base mb-3';
-  gridContainer.className = 'grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 flex-1 overflow-hidden';
-  addBtn = document.createElement('button');
-  stockInfo = document.createElement('div');
+
+  const addBtn = document.createElement('button');
   addBtn.id = 'add-to-cart';
-  stockInfo.id = 'stock-status';
-  stockInfo.className = 'text-xs text-red-500 mt-3 whitespace-pre-line';
   addBtn.innerHTML = 'Add to Cart';
   addBtn.className =
     'w-full py-3 bg-black text-white text-sm font-medium uppercase tracking-wider hover:bg-gray-800 transition-all';
+
+  const stockInfo = document.createElement('div');
+  stockInfo.id = 'stock-status';
+  stockInfo.className = 'text-xs text-red-500 mt-3 whitespace-pre-line';
+
   selectorContainer.appendChild(sel);
   selectorContainer.appendChild(addBtn);
   selectorContainer.appendChild(stockInfo);
   leftColumn.appendChild(selectorContainer);
-  cartDisp = document.createElement('div');
+
+  const cartDisp = document.createElement('div');
   leftColumn.appendChild(cartDisp);
   cartDisp.id = 'cart-items';
+
   const rightColumn = document.createElement('div');
   rightColumn.className = 'bg-black text-white p-8 flex flex-col';
   rightColumn.innerHTML = `
@@ -118,9 +126,12 @@ function main() {
       <span id="points-notice">Earn loyalty points with purchase.</span>
     </p>
   `;
+
   sum = rightColumn.querySelector('#cart-total');
+
   const manualOverlay = document.createElement('div');
   const manualColumn = document.createElement('div');
+
   const manualToggle = document.createElement('button');
   manualToggle.onclick = function () {
     manualOverlay.classList.toggle('hidden');
@@ -209,9 +220,12 @@ function main() {
   root.appendChild(gridContainer);
   root.appendChild(manualToggle);
   root.appendChild(manualOverlay);
+
   onUpdateSelectOptions();
   handleCalculateCartStuff();
+
   const lightningDelay = Math.random() * 10000;
+
   setTimeout(() => {
     setInterval(function () {
       const luckyIdx = Math.floor(Math.random() * prodList.length);
@@ -225,6 +239,7 @@ function main() {
       }
     }, 30000);
   }, lightningDelay);
+
   setTimeout(function () {
     setInterval(function () {
       if (lastSel) {
@@ -250,21 +265,26 @@ function main() {
     }, 60000);
   }, Math.random() * 20000);
 }
+
 let sum;
+
 function onUpdateSelectOptions() {
   let totalStock;
-  let opt;
   let discountText;
+
+  const sel = document.getElementById('product-select');
   sel.innerHTML = '';
   totalStock = 0;
+
   for (let idx = 0; idx < prodList.length; idx++) {
     const _p = prodList[idx];
     totalStock = totalStock + _p.q;
   }
+
   for (let i = 0; i < prodList.length; i++) {
     (function () {
       const item = prodList[i];
-      opt = document.createElement('option');
+      const opt = document.createElement('option');
       opt.value = item.id;
       discountText = '';
       if (item.onSale) discountText += ' ⚡SALE';
@@ -296,25 +316,24 @@ function onUpdateSelectOptions() {
     sel.style.borderColor = '';
   }
 }
-function handleCalculateCartStuff() {
-  let subTot;
-  let idx;
 
-  let savedAmount;
-  let points;
-  let previousCount;
-  let stockMsg;
+function handleCalculateCartStuff() {
   totalAmt = 0;
   itemCnt = 0;
+
+  const cartDisp = document.getElementById('cart-items');
   const cartItems = cartDisp.children;
-  subTot = 0;
+
+  let subTot = 0;
   const itemDiscounts = [];
   const lowStockItems = [];
-  for (idx = 0; idx < prodList.length; idx++) {
+
+  for (let idx = 0; idx < prodList.length; idx++) {
     if (prodList[idx].q < 5 && prodList[idx].q > 0) {
       lowStockItems.push(prodList[idx].name);
     }
   }
+
   for (let i = 0; i < cartItems.length; i++) {
     (function () {
       let curItem;
@@ -365,17 +384,21 @@ function handleCalculateCartStuff() {
       totalAmt += itemTot * (1 - disc);
     })();
   }
+
   let discRate = 0;
   const originalTotal = subTot;
+
   if (itemCnt >= 30) {
     totalAmt = (subTot * 75) / 100;
     discRate = 25 / 100;
   } else {
     discRate = (subTot - totalAmt) / subTot;
   }
+
   const today = new Date();
   const isTuesday = today.getDay() === 2;
   const tuesdaySpecial = document.getElementById('tuesday-special');
+
   if (isTuesday) {
     if (totalAmt > 0) {
       totalAmt = (totalAmt * 90) / 100;
@@ -387,9 +410,12 @@ function handleCalculateCartStuff() {
   } else {
     tuesdaySpecial.classList.add('hidden');
   }
+
   document.getElementById('item-count').textContent = '🛍️ ' + itemCnt + ' items in cart';
+
   const summaryDetails = document.getElementById('summary-details');
   summaryDetails.innerHTML = '';
+
   if (subTot > 0) {
     for (let i = 0; i < cartItems.length; i++) {
       let curItem;
@@ -450,13 +476,15 @@ function handleCalculateCartStuff() {
       </div>
     `;
   }
+
   const totalDiv = sum.querySelector('.text-2xl');
   if (totalDiv) {
     totalDiv.textContent = '₩' + Math.round(totalAmt).toLocaleString();
   }
+
   const loyaltyPointsDiv = document.getElementById('loyalty-points');
   if (loyaltyPointsDiv) {
-    points = Math.floor(totalAmt / 1000);
+    const points = Math.floor(totalAmt / 1000);
     if (points > 0) {
       loyaltyPointsDiv.textContent = '적립 포인트: ' + points + 'p';
       loyaltyPointsDiv.style.display = 'block';
@@ -465,10 +493,12 @@ function handleCalculateCartStuff() {
       loyaltyPointsDiv.style.display = 'block';
     }
   }
+
   const discountInfoDiv = document.getElementById('discount-info');
   discountInfoDiv.innerHTML = '';
+
   if (discRate > 0 && totalAmt > 0) {
-    savedAmount = originalTotal - totalAmt;
+    const savedAmount = originalTotal - totalAmt;
     discountInfoDiv.innerHTML = `
       <div class="bg-green-500/20 rounded-lg p-3">
         <div class="flex justify-between items-center mb-1">
@@ -479,15 +509,17 @@ function handleCalculateCartStuff() {
       </div>
     `;
   }
+
   const itemCountElement = document.getElementById('item-count');
   if (itemCountElement) {
-    previousCount = parseInt(itemCountElement.textContent.match(/\d+/) || 0);
+    const previousCount = parseInt(itemCountElement.textContent.match(/\d+/) || 0);
     itemCountElement.textContent = '🛍️ ' + itemCnt + ' items in cart';
     if (previousCount !== itemCnt) {
       itemCountElement.setAttribute('data-changed', 'true');
     }
   }
-  stockMsg = '';
+
+  let stockMsg = '';
   for (let stockIdx = 0; stockIdx < prodList.length; stockIdx++) {
     const item = prodList[stockIdx];
     if (item.q < 5) {
@@ -498,15 +530,19 @@ function handleCalculateCartStuff() {
       }
     }
   }
+  const stockInfo = document.getElementById('stock-status');
   stockInfo.textContent = stockMsg;
   handleStockInfoUpdate();
   doRenderBonusPoints();
 }
+
 const doRenderBonusPoints = function () {
   let finalPoints;
   let hasKeyboard;
   let hasMouse;
   let hasMonitorArm;
+
+  const cartDisp = document.getElementById('cart-items');
   if (cartDisp.children.length === 0) {
     document.getElementById('loyalty-points').style.display = 'none';
     return;
@@ -529,13 +565,7 @@ const doRenderBonusPoints = function () {
   hasMonitorArm = false;
   const nodes = cartDisp.children;
   for (const node of nodes) {
-    let product = null;
-    for (let pIdx = 0; pIdx < prodList.length; pIdx++) {
-      if (prodList[pIdx].id === node.id) {
-        product = prodList[pIdx];
-        break;
-      }
-    }
+    const product = prodList.find((item) => item.id === node.id);
     if (!product) continue;
     if (product.id === PRODUCT_ONE) {
       hasKeyboard = true;
@@ -567,7 +597,7 @@ const doRenderBonusPoints = function () {
       }
     }
   }
-  bonusPts = finalPoints;
+  const bonusPts = finalPoints;
   const ptsTag = document.getElementById('loyalty-points');
   if (ptsTag) {
     if (bonusPts > 0) {
@@ -597,19 +627,16 @@ const handleStockInfoUpdate = function () {
       }
     }
   });
+  const stockInfo = document.getElementById('stock-status');
   stockInfo.textContent = infoMsg;
 };
+
 function doUpdatePricesInCart() {
+  const cartDisp = document.getElementById('cart-items');
   const cartItems = cartDisp.children;
   for (let i = 0; i < cartItems.length; i++) {
     const itemId = cartItems[i].id;
-    let product = null;
-    for (let productIdx = 0; productIdx < prodList.length; productIdx++) {
-      if (prodList[productIdx].id === itemId) {
-        product = prodList[productIdx];
-        break;
-      }
-    }
+    const product = prodList.find((item) => item.id === itemId);
     if (product) {
       const priceDiv = cartItems[i].querySelector('.text-lg');
       const nameDiv = cartItems[i].querySelector('h3');
@@ -645,26 +672,20 @@ function doUpdatePricesInCart() {
   }
   handleCalculateCartStuff();
 }
+
+//main 실행
 main();
+
+// 이벤트핸들러
+const addBtn = document.getElementById('add-to-cart');
 addBtn.addEventListener('click', function () {
+  const sel = document.getElementById('product-select');
   const selItem = sel.value;
-  let hasItem = false;
-  for (let idx = 0; idx < prodList.length; idx++) {
-    if (prodList[idx].id === selItem) {
-      hasItem = true;
-      break;
-    }
-  }
+  const hasItem = prodList.some((product) => product.id === selItem);
   if (!selItem || !hasItem) {
     return;
   }
-  let itemToAdd = null;
-  for (let j = 0; j < prodList.length; j++) {
-    if (prodList[j].id === selItem) {
-      itemToAdd = prodList[j];
-      break;
-    }
-  }
+  const itemToAdd = prodList.find((product) => product.id === selItem);
   if (itemToAdd && itemToAdd.q > 0) {
     const item = document.getElementById(itemToAdd['id']);
     if (item) {
@@ -690,10 +711,10 @@ addBtn.addEventListener('click', function () {
             itemToAdd.onSale && itemToAdd.suggestSale
               ? '⚡💝'
               : itemToAdd.onSale
-              ? '⚡'
-              : itemToAdd.suggestSale
-              ? '💝'
-              : ''
+                ? '⚡'
+                : itemToAdd.suggestSale
+                  ? '💝'
+                  : ''
           }${itemToAdd.name}</h3>
           <p class="text-xs text-gray-500 mb-0.5 tracking-wide">PRODUCT</p>
           <p class="text-xs text-black mb-3">${
@@ -704,8 +725,8 @@ addBtn.addEventListener('click', function () {
                 (itemToAdd.onSale && itemToAdd.suggestSale
                   ? 'text-purple-600'
                   : itemToAdd.onSale
-                  ? 'text-red-500'
-                  : 'text-blue-500') +
+                    ? 'text-red-500'
+                    : 'text-blue-500') +
                 '">₩' +
                 itemToAdd.val.toLocaleString() +
                 '</span>'
@@ -730,8 +751,8 @@ addBtn.addEventListener('click', function () {
                 (itemToAdd.onSale && itemToAdd.suggestSale
                   ? 'text-purple-600'
                   : itemToAdd.onSale
-                  ? 'text-red-500'
-                  : 'text-blue-500') +
+                    ? 'text-red-500'
+                    : 'text-blue-500') +
                 '">₩' +
                 itemToAdd.val.toLocaleString() +
                 '</span>'
@@ -742,6 +763,7 @@ addBtn.addEventListener('click', function () {
           }">Remove</a>
         </div>
       `;
+      const cartDisp = document.getElementById('cart-items');
       cartDisp.appendChild(newItem);
       itemToAdd.q--;
     }
@@ -749,18 +771,14 @@ addBtn.addEventListener('click', function () {
     lastSel = selItem;
   }
 });
+
+const cartDisp = document.getElementById('cart-items');
 cartDisp.addEventListener('click', function (event) {
   const tgt = event.target;
   if (tgt.classList.contains('quantity-change') || tgt.classList.contains('remove-item')) {
     const prodId = tgt.dataset.productId;
     const itemElem = document.getElementById(prodId);
-    let prod = null;
-    for (let prdIdx = 0; prdIdx < prodList.length; prdIdx++) {
-      if (prodList[prdIdx].id === prodId) {
-        prod = prodList[prdIdx];
-        break;
-      }
-    }
+    const prod = prodList.find((product) => product.id === prodId);
     if (tgt.classList.contains('quantity-change')) {
       const qtyChange = parseInt(tgt.dataset.change);
       const qtyElem = itemElem.querySelector('.quantity-number');
@@ -781,6 +799,7 @@ cartDisp.addEventListener('click', function (event) {
       prod.q += remQty;
       itemElem.remove();
     }
+
     handleCalculateCartStuff();
     onUpdateSelectOptions();
   }
