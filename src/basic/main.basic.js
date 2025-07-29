@@ -680,7 +680,24 @@ const calculateBonusPoints = () => {
   return { finalPoints, pointsDetail };
 };
 
-// 🎁 포인트 관련 HTML 헬퍼 함수
+// 💰 가격 업데이트 헬퍼 함수
+const updateCartItemPrice = (cartItem, product) => {
+  const priceDiv = cartItem.querySelector('.text-lg');
+  const nameDiv = cartItem.querySelector('h3');
+
+  // 가격 HTML 생성
+  const priceHTML = getPriceHTML(product);
+
+  // 이름에 아이콘 추가
+  const icon = getSaleIcon(product);
+  const nameText = `${icon}${product.name}`;
+
+  // DOM 업데이트
+  priceDiv.innerHTML = priceHTML;
+  nameDiv.textContent = nameText;
+};
+
+// �� 포인트 관련 HTML 헬퍼 함수
 const createBonusPointsHTML = (points, details) => /*html*/ `
   <div>적립 포인트: <span class="font-bold">${points}p</span></div>
   <div class="text-2xs opacity-70 mt-1">${details.join(', ')}</div>
@@ -688,43 +705,19 @@ const createBonusPointsHTML = (points, details) => /*html*/ `
 
 function doUpdatePricesInCart() {
   const cartDisp = document.getElementById('cart-items');
-  const cartItems = cartDisp.children;
-  for (let i = 0; i < cartItems.length; i++) {
-    const itemId = cartItems[i].id;
+  const cartItems = Array.from(cartDisp.children);
+
+  // 각 장바구니 아이템의 가격 정보 업데이트
+  cartItems.forEach((cartItem) => {
+    const itemId = cartItem.id;
     const product = prodList.find((item) => item.id === itemId);
+
     if (product) {
-      const priceDiv = cartItems[i].querySelector('.text-lg');
-      const nameDiv = cartItems[i].querySelector('h3');
-      if (product.onSale && product.suggestSale) {
-        priceDiv.innerHTML =
-          '<span class="line-through text-gray-400">₩' +
-          product.originalVal.toLocaleString() +
-          '</span> <span class="text-purple-600">₩' +
-          product.val.toLocaleString() +
-          '</span>';
-        nameDiv.textContent = '⚡💝' + product.name;
-      } else if (product.onSale) {
-        priceDiv.innerHTML =
-          '<span class="line-through text-gray-400">₩' +
-          product.originalVal.toLocaleString() +
-          '</span> <span class="text-red-500">₩' +
-          product.val.toLocaleString() +
-          '</span>';
-        nameDiv.textContent = '⚡' + product.name;
-      } else if (product.suggestSale) {
-        priceDiv.innerHTML =
-          '<span class="line-through text-gray-400">₩' +
-          product.originalVal.toLocaleString() +
-          '</span> <span class="text-blue-500">₩' +
-          product.val.toLocaleString() +
-          '</span>';
-        nameDiv.textContent = '💝' + product.name;
-      } else {
-        priceDiv.textContent = '₩' + product.val.toLocaleString();
-        nameDiv.textContent = product.name;
-      }
+      updateCartItemPrice(cartItem, product);
     }
-  }
+  });
+
+  // 전체 계산 다시 실행
   handleCalculateCartStuff();
 }
 
