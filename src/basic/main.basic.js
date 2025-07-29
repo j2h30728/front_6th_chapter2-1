@@ -330,6 +330,36 @@ function onUpdateSelectOptions() {
   sel.style.borderColor = totalStock < 50 ? 'orange' : '';
 }
 
+// 📊 순수 계산 함수들
+const calculateItemDiscounts = (cartItems) => {
+  const itemDiscounts = [];
+
+  for (let i = 0; i < cartItems.length; i++) {
+    const curItem = prodList.find((product) => product.id === cartItems[i].id);
+    const qtyElem = cartItems[i].querySelector('.quantity-number');
+    const quantity = parseInt(qtyElem.textContent);
+
+    // 10개 이상 구매 시 할인 적용
+    if (quantity >= 10) {
+      const discountRates = {
+        [PRODUCT_ONE]: 0.1,
+        [p2]: 0.15,
+        [product_3]: 0.2,
+        [p4]: 0.05,
+        [PRODUCT_5]: 0.25,
+      };
+
+      const discount = discountRates[curItem.id] || 0;
+
+      if (discount > 0) {
+        itemDiscounts.push({ name: curItem.name, discount: discount * 100 });
+      }
+    }
+  }
+
+  return itemDiscounts;
+};
+
 function handleCalculateCartStuff() {
   totalAmt = 0;
   itemCnt = 0;
@@ -338,8 +368,10 @@ function handleCalculateCartStuff() {
   const cartItems = cartDisp.children;
 
   let subTot = 0;
-  const itemDiscounts = [];
   const lowStockItems = [];
+
+  // 할인 정보 계산
+  const itemDiscounts = calculateItemDiscounts(cartItems);
 
   for (let idx = 0; idx < prodList.length; idx++) {
     if (prodList[idx].q < 5 && prodList[idx].q > 0) {
@@ -366,7 +398,7 @@ function handleCalculateCartStuff() {
       }
     });
 
-    // 10개 이상 구매 시 할인 적용
+    // 할인율 적용 (이미 계산된 할인 정보에서 찾기)
     if (quantity >= 10) {
       const discountRates = {
         [PRODUCT_ONE]: 0.1,
@@ -377,10 +409,6 @@ function handleCalculateCartStuff() {
       };
 
       discount = discountRates[curItem.id] || 0;
-
-      if (discount > 0) {
-        itemDiscounts.push({ name: curItem.name, discount: discount * 100 });
-      }
     }
 
     totalAmt += itemTotal * (1 - discount);
