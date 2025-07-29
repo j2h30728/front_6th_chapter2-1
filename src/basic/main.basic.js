@@ -56,7 +56,7 @@ function main() {
   const root = document.getElementById('app');
 
   // 앱 전체 구조를 템플릿 리터럴로 생성
-  root.innerHTML = `
+  root.innerHTML = /*html*/ `
     <!-- Header -->
     <div class="mb-8">
       <h1 class="text-xs font-medium tracking-extra-wide uppercase mb-2">🛒 Hanghae Online Store</h1>
@@ -422,14 +422,14 @@ function handleCalculateCartStuff() {
       const qtyElem = cartItems[i].querySelector('.quantity-number');
       const q = parseInt(qtyElem.textContent);
       const itemTotal = curItem.val * q;
-      summaryDetails.innerHTML += `
+      summaryDetails.innerHTML += /*html*/ `
         <div class="flex justify-between text-xs tracking-wide text-gray-400">
           <span>${curItem.name} x ${q}</span>
           <span>₩${itemTotal.toLocaleString()}</span>
         </div>
       `;
     }
-    summaryDetails.innerHTML += `
+    summaryDetails.innerHTML += /*html*/ `
       <div class="border-t border-white/10 my-3"></div>
       <div class="flex justify-between text-sm tracking-wide">
         <span>Subtotal</span>
@@ -437,7 +437,7 @@ function handleCalculateCartStuff() {
       </div>
     `;
     if (itemCnt >= 30) {
-      summaryDetails.innerHTML += `
+      summaryDetails.innerHTML += /*html*/ `
         <div class="flex justify-between text-sm tracking-wide text-green-400">
           <span class="text-xs">🎉 대량구매 할인 (30개 이상)</span>
           <span class="text-xs">-25%</span>
@@ -445,7 +445,7 @@ function handleCalculateCartStuff() {
       `;
     } else if (itemDiscounts.length > 0) {
       itemDiscounts.forEach(function (item) {
-        summaryDetails.innerHTML += `
+        summaryDetails.innerHTML += /*html*/ `
           <div class="flex justify-between text-sm tracking-wide text-green-400">
             <span class="text-xs">${item.name} (10개↑)</span>
             <span class="text-xs">-${item.discount}%</span>
@@ -455,7 +455,7 @@ function handleCalculateCartStuff() {
     }
     if (isTuesday) {
       if (totalAmt > 0) {
-        summaryDetails.innerHTML += `
+        summaryDetails.innerHTML += /*html*/ `
           <div class="flex justify-between text-sm tracking-wide text-purple-400">
             <span class="text-xs">🌟 화요일 추가 할인</span>
             <span class="text-xs">-10%</span>
@@ -463,7 +463,7 @@ function handleCalculateCartStuff() {
         `;
       }
     }
-    summaryDetails.innerHTML += `
+    summaryDetails.innerHTML += /*html*/ `
       <div class="flex justify-between text-sm tracking-wide text-gray-400">
         <span>Shipping</span>
         <span>Free</span>
@@ -493,7 +493,7 @@ function handleCalculateCartStuff() {
 
   if (discRate > 0 && totalAmt > 0) {
     const savedAmount = originalTotal - totalAmt;
-    discountInfoDiv.innerHTML = `
+    discountInfoDiv.innerHTML = /*html*/ `
       <div class="bg-green-500/20 rounded-lg p-3">
         <div class="flex justify-between items-center mb-1">
           <span class="text-xs uppercase tracking-wide text-green-400">총 할인율</span>
@@ -683,7 +683,7 @@ const getPriceHTML = (item) => {
   const colorClass =
     item.onSale && item.suggestSale ? 'text-purple-600' : item.onSale ? 'text-red-500' : 'text-blue-500';
 
-  return `
+  return /*html*/ `
     <span class="line-through text-gray-400">₩${item.originalVal.toLocaleString()}</span> 
     <span class="${colorClass}">₩${item.val.toLocaleString()}</span>
   `;
@@ -694,7 +694,7 @@ const createCartItemHTML = (item) => {
   const icon = getSaleIcon(item);
   const priceHTML = getPriceHTML(item);
 
-  return `
+  return /*html*/ `
     <div 
       id="${item.id}" 
       class="grid grid-cols-[80px_1fr_auto] gap-5 py-5 border-b border-gray-100 first:pt-0 last:border-b-0 last:pb-0"
