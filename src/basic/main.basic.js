@@ -360,6 +360,16 @@ const calculateItemDiscounts = (cartItems) => {
   return itemDiscounts;
 };
 
+// 📦 재고 상태 헬퍼 함수
+const createStockMessage = (item) => {
+  if (item.q === 0) {
+    return `${item.name}: 품절`;
+  } else if (item.q < 5) {
+    return `${item.name}: 재고 부족 (${item.q}개 남음)`;
+  }
+  return null; // 재고 충분한 경우
+};
+
 function handleCalculateCartStuff() {
   totalAmt = 0;
   itemCnt = 0;
@@ -637,18 +647,14 @@ const doRenderBonusPoints = function () {
 };
 
 const handleStockInfoUpdate = function () {
-  let infoMsg = '';
-  prodList.forEach(function (item) {
-    if (item.q < 5) {
-      if (item.q > 0) {
-        infoMsg = infoMsg + item.name + ': 재고 부족 (' + item.q + '개 남음)\n';
-      } else {
-        infoMsg = infoMsg + item.name + ': 품절\n';
-      }
-    }
-  });
+  // 재고 부족/품절 상품들을 필터링하고 메시지 생성
+  const stockMessages = prodList
+    .filter((item) => item.q < 5)
+    .map(createStockMessage)
+    .filter((message) => message !== null);
+
   const stockInfo = document.getElementById('stock-status');
-  stockInfo.textContent = infoMsg;
+  stockInfo.textContent = stockMessages.join('\n');
 };
 
 function doUpdatePricesInCart() {
