@@ -348,54 +348,42 @@ function handleCalculateCartStuff() {
   }
 
   for (let i = 0; i < cartItems.length; i++) {
-    (function () {
-      let curItem;
-      for (let j = 0; j < prodList.length; j++) {
-        if (prodList[j].id === cartItems[i].id) {
-          curItem = prodList[j];
-          break;
-        }
+    const curItem = prodList.find((product) => product.id === cartItems[i].id);
+    const qtyElem = cartItems[i].querySelector('.quantity-number');
+    const quantity = parseInt(qtyElem.textContent);
+    const itemTotal = curItem.val * quantity;
+    let discount = 0;
+
+    itemCnt += quantity;
+    subTot += itemTotal;
+
+    // 수량에 따른 굵은 글씨 적용
+    const itemDiv = cartItems[i];
+    const priceElems = itemDiv.querySelectorAll('.text-lg, .text-xs');
+    priceElems.forEach(function (elem) {
+      if (elem.classList.contains('text-lg')) {
+        elem.style.fontWeight = quantity >= 10 ? 'bold' : 'normal';
       }
-      const qtyElem = cartItems[i].querySelector('.quantity-number');
-      let disc;
-      const q = parseInt(qtyElem.textContent);
-      const itemTot = curItem.val * q;
-      disc = 0;
-      itemCnt += q;
-      subTot += itemTot;
-      const itemDiv = cartItems[i];
-      const priceElems = itemDiv.querySelectorAll('.text-lg, .text-xs');
-      priceElems.forEach(function (elem) {
-        if (elem.classList.contains('text-lg')) {
-          elem.style.fontWeight = q >= 10 ? 'bold' : 'normal';
-        }
-      });
-      if (q >= 10) {
-        if (curItem.id === PRODUCT_ONE) {
-          disc = 10 / 100;
-        } else {
-          if (curItem.id === p2) {
-            disc = 15 / 100;
-          } else {
-            if (curItem.id === product_3) {
-              disc = 20 / 100;
-            } else {
-              if (curItem.id === p4) {
-                disc = 5 / 100;
-              } else {
-                if (curItem.id === PRODUCT_5) {
-                  disc = 25 / 100;
-                }
-              }
-            }
-          }
-        }
-        if (disc > 0) {
-          itemDiscounts.push({ name: curItem.name, discount: disc * 100 });
-        }
+    });
+
+    // 10개 이상 구매 시 할인 적용
+    if (quantity >= 10) {
+      const discountRates = {
+        [PRODUCT_ONE]: 0.1,
+        [p2]: 0.15,
+        [product_3]: 0.2,
+        [p4]: 0.05,
+        [PRODUCT_5]: 0.25,
+      };
+
+      discount = discountRates[curItem.id] || 0;
+
+      if (discount > 0) {
+        itemDiscounts.push({ name: curItem.name, discount: discount * 100 });
       }
-      totalAmt += itemTot * (1 - disc);
-    })();
+    }
+
+    totalAmt += itemTotal * (1 - discount);
   }
 
   let discRate = 0;
@@ -408,18 +396,15 @@ function handleCalculateCartStuff() {
     discRate = (subTot - totalAmt) / subTot;
   }
 
+  // 화요일 추가 할인 적용
   const today = new Date();
   const isTuesday = today.getDay() === 2;
   const tuesdaySpecial = document.getElementById('tuesday-special');
 
-  if (isTuesday) {
-    if (totalAmt > 0) {
-      totalAmt = (totalAmt * 90) / 100;
-      discRate = 1 - totalAmt / originalTotal;
-      tuesdaySpecial.classList.remove('hidden');
-    } else {
-      tuesdaySpecial.classList.add('hidden');
-    }
+  if (isTuesday && totalAmt > 0) {
+    totalAmt = (totalAmt * 90) / 100;
+    discRate = 1 - totalAmt / originalTotal;
+    tuesdaySpecial.classList.remove('hidden');
   } else {
     tuesdaySpecial.classList.add('hidden');
   }
@@ -431,19 +416,13 @@ function handleCalculateCartStuff() {
 
   if (subTot > 0) {
     for (let i = 0; i < cartItems.length; i++) {
-      let curItem;
-      for (let j = 0; j < prodList.length; j++) {
-        if (prodList[j].id === cartItems[i].id) {
-          curItem = prodList[j];
-          break;
-        }
-      }
+      const curItem = prodList.find((product) => product.id === cartItems[i].id);
       const qtyElem = cartItems[i].querySelector('.quantity-number');
-      const q = parseInt(qtyElem.textContent);
-      const itemTotal = curItem.val * q;
+      const quantity = parseInt(qtyElem.textContent);
+      const itemTotal = curItem.val * quantity;
       summaryDetails.innerHTML += /*html*/ `
         <div class="flex justify-between text-xs tracking-wide text-gray-400">
-          <span>${curItem.name} x ${q}</span>
+          <span>${curItem.name} x ${quantity}</span>
           <span>₩${itemTotal.toLocaleString()}</span>
         </div>
       `;
