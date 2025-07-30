@@ -81,6 +81,20 @@ const productReducer = (state, action) => {
             : product
         ),
       };
+    case 'SET_PRODUCT_PRICE':
+      return {
+        ...state,
+        products: state.products.map((product) =>
+          product.id === action.payload.productId ? { ...product, val: action.payload.price } : product
+        ),
+      };
+    case 'RESET_PRODUCT_PRICE':
+      return {
+        ...state,
+        products: state.products.map((product) =>
+          product.id === action.payload.productId ? { ...product, val: product.originalVal } : product
+        ),
+      };
     default:
       return state;
   }
@@ -327,6 +341,13 @@ function main() {
       if (luckyItem.q > 0 && !luckyItem.onSale) {
         const newPrice = Math.round((luckyItem.originalVal * 80) / 100);
         productStore.dispatch({
+          type: 'SET_PRODUCT_PRICE',
+          payload: {
+            productId: luckyItem.id,
+            price: newPrice,
+          },
+        });
+        productStore.dispatch({
           type: 'SET_PRODUCT_SALE',
           payload: {
             productId: luckyItem.id,
@@ -359,6 +380,13 @@ function main() {
         if (suggest) {
           alert('💝 ' + suggest.name + '은(는) 어떠세요? 지금 구매하시면 5% 추가 할인!');
           const newPrice = Math.round((suggest.val * (100 - 5)) / 100);
+          productStore.dispatch({
+            type: 'SET_PRODUCT_PRICE',
+            payload: {
+              productId: suggest.id,
+              price: newPrice,
+            },
+          });
           productStore.dispatch({
             type: 'SET_PRODUCT_SALE',
             payload: {
