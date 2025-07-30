@@ -1,3 +1,4 @@
+import createObserver from './utils/createObserver.js';
 import createStore from './utils/createStore.js';
 
 // 🏪 Cart Store - 장바구니 상태 관리
@@ -383,6 +384,74 @@ function main() {
   const manualOverlay = document.getElementById('manual-overlay');
   const manualColumn = document.getElementById('manual-column');
 
+  // 🔍 Observers 활성화 - DOM 준비 후
+  const cartObserver = createObserver(cartStore, (state) => {
+    // 장바구니 상태 변경 시 UI 업데이트
+    const itemCountElement = document.getElementById('item-count');
+    if (itemCountElement) {
+      itemCountElement.textContent = '🛍️ ' + state.itemCnt + ' items in cart';
+    }
+
+    // 총액 변경 시 UI 업데이트
+    const totalDiv = document.getElementById('cart-total')?.querySelector('.text-2xl');
+    if (totalDiv) {
+      totalDiv.textContent = '₩' + Math.round(state.totalAmt).toLocaleString();
+    }
+
+    // 포인트 계산 및 표시
+    const loyaltyPointsDiv = document.getElementById('loyalty-points');
+    if (loyaltyPointsDiv) {
+      const points = Math.floor(state.totalAmt / 1000);
+      const pointsDisplay = points > 0 ? `적립 포인트: ${points}p` : '적립 포인트: 0p';
+      loyaltyPointsDiv.textContent = pointsDisplay;
+      loyaltyPointsDiv.style.display = 'block';
+    }
+  });
+
+  const productObserver = createObserver(productStore, () => {
+    // 상품 상태 변경 시 UI 업데이트
+    onUpdateSelectOptions();
+    doUpdatePricesInCart();
+    handleCalculateCartStuff();
+  });
+
+  const uiObserver = createObserver(uiStore, (state) => {
+    // UI 상태 변경 시 DOM 업데이트
+    const overlayElement = document.getElementById('manual-overlay');
+    const columnElement = document.getElementById('manual-column');
+
+    if (overlayElement && columnElement) {
+      if (state.isManualOverlayVisible) {
+        overlayElement.classList.remove('hidden');
+        columnElement.classList.remove('translate-x-full');
+      } else {
+        overlayElement.classList.add('hidden');
+        columnElement.classList.add('translate-x-full');
+      }
+    }
+
+    // 화요일 할인 표시
+    const tuesdaySpecial = document.getElementById('tuesday-special');
+    if (tuesdaySpecial) {
+      if (state.isTuesdaySpecialVisible) {
+        tuesdaySpecial.classList.remove('hidden');
+      } else {
+        tuesdaySpecial.classList.add('hidden');
+      }
+    }
+
+    // 재고 메시지 표시
+    const stockInfo = document.getElementById('stock-status');
+    if (stockInfo) {
+      stockInfo.textContent = state.stockMessage;
+    }
+  });
+
+  // Observer 활성화 (실제로 사용되도록)
+  cartObserver.subscribe();
+  productObserver.subscribe();
+  uiObserver.subscribe();
+
   // 이벤트 리스너 추가
   manualToggle.onclick = function () {
     uiStore.dispatch({ type: 'TOGGLE_MANUAL_OVERLAY' });
@@ -479,7 +548,6 @@ function main() {
               suggestSale: true,
             },
           });
-
           onUpdateSelectOptions();
           doUpdatePricesInCart();
         }
