@@ -176,6 +176,47 @@ const productStore = createStore(productReducer, {
   ],
 });
 
+// 🏪 UI Store - UI 상태 관리
+const uiReducer = (state, action) => {
+  switch (action.type) {
+    case 'TOGGLE_MANUAL_OVERLAY':
+      return { ...state, isManualOverlayVisible: !state.isManualOverlayVisible };
+    case 'SET_MANUAL_OVERLAY_VISIBLE':
+      return { ...state, isManualOverlayVisible: action.payload };
+    case 'TOGGLE_TUESDAY_SPECIAL':
+      return { ...state, isTuesdaySpecialVisible: action.payload };
+    case 'SET_DISCOUNT_INFO_VISIBLE':
+      return { ...state, isDiscountInfoVisible: action.payload };
+    case 'SET_STOCK_MESSAGE':
+      return { ...state, stockMessage: action.payload };
+    case 'SET_ITEM_COUNT_DISPLAY':
+      return { ...state, itemCountDisplay: action.payload };
+    case 'SET_POINTS_DISPLAY':
+      return { ...state, pointsDisplay: action.payload };
+    case 'RESET_UI_STATE':
+      return {
+        ...state,
+        isManualOverlayVisible: false,
+        isTuesdaySpecialVisible: false,
+        isDiscountInfoVisible: false,
+        stockMessage: '',
+        itemCountDisplay: '🛍️ 0 items in cart',
+        pointsDisplay: '적립 포인트: 0p',
+      };
+    default:
+      return state;
+  }
+};
+
+const uiStore = createStore(uiReducer, {
+  isManualOverlayVisible: false,
+  isTuesdaySpecialVisible: false,
+  isDiscountInfoVisible: false,
+  stockMessage: '',
+  itemCountDisplay: '🛍️ 0 items in cart',
+  pointsDisplay: '적립 포인트: 0p',
+});
+
 // 🧩 컴포넌트들 - React스러운 구조
 const createHeader = () => /*html*/ `
   <div class="mb-8">
@@ -344,12 +385,21 @@ function main() {
 
   // 이벤트 리스너 추가
   manualToggle.onclick = function () {
-    manualOverlay.classList.toggle('hidden');
-    manualColumn.classList.toggle('translate-x-full');
+    uiStore.dispatch({ type: 'TOGGLE_MANUAL_OVERLAY' });
+    const isVisible = uiStore.getState().isManualOverlayVisible;
+
+    if (isVisible) {
+      manualOverlay.classList.remove('hidden');
+      manualColumn.classList.remove('translate-x-full');
+    } else {
+      manualOverlay.classList.add('hidden');
+      manualColumn.classList.add('translate-x-full');
+    }
   };
 
   manualOverlay.onclick = function (e) {
     if (e.target === manualOverlay) {
+      uiStore.dispatch({ type: 'SET_MANUAL_OVERLAY_VISIBLE', payload: false });
       manualOverlay.classList.add('hidden');
       manualColumn.classList.add('translate-x-full');
     }
@@ -650,8 +700,10 @@ function handleCalculateCartStuff() {
   if (isTuesday && cartStore.getState().totalAmt > 0) {
     cartStore.dispatch({ type: 'SET_TOTAL_AMOUNT', payload: (cartStore.getState().totalAmt * 90) / 100 });
     discRate = 1 - cartStore.getState().totalAmt / originalTotal;
+    uiStore.dispatch({ type: 'TOGGLE_TUESDAY_SPECIAL', payload: true });
     tuesdaySpecial.classList.remove('hidden');
   } else {
+    uiStore.dispatch({ type: 'TOGGLE_TUESDAY_SPECIAL', payload: false });
     tuesdaySpecial.classList.add('hidden');
   }
 
@@ -693,10 +745,14 @@ function handleCalculateCartStuff() {
   if (loyaltyPointsDiv) {
     const points = Math.floor(cartStore.getState().totalAmt / 1000);
     if (points > 0) {
-      loyaltyPointsDiv.textContent = '적립 포인트: ' + points + 'p';
+      const pointsDisplay = '적립 포인트: ' + points + 'p';
+      uiStore.dispatch({ type: 'SET_POINTS_DISPLAY', payload: pointsDisplay });
+      loyaltyPointsDiv.textContent = pointsDisplay;
       loyaltyPointsDiv.style.display = 'block';
     } else {
-      loyaltyPointsDiv.textContent = '적립 포인트: 0p';
+      const pointsDisplay = '적립 포인트: 0p';
+      uiStore.dispatch({ type: 'SET_POINTS_DISPLAY', payload: pointsDisplay });
+      loyaltyPointsDiv.textContent = pointsDisplay;
       loyaltyPointsDiv.style.display = 'block';
     }
   }
@@ -706,6 +762,7 @@ function handleCalculateCartStuff() {
 
   if (discRate > 0 && cartStore.getState().totalAmt > 0) {
     const savedAmount = originalTotal - cartStore.getState().totalAmt;
+    uiStore.dispatch({ type: 'SET_DISCOUNT_INFO_VISIBLE', payload: true });
     discountInfoDiv.innerHTML = /*html*/ `
       <div class="bg-green-500/20 rounded-lg p-3">
         <div class="flex justify-between items-center mb-1">
@@ -715,12 +772,16 @@ function handleCalculateCartStuff() {
         <div class="text-2xs text-gray-300">₩${Math.round(savedAmount).toLocaleString()} 할인되었습니다</div>
       </div>
     `;
+  } else {
+    uiStore.dispatch({ type: 'SET_DISCOUNT_INFO_VISIBLE', payload: false });
   }
 
   const itemCountElement = document.getElementById('item-count');
   if (itemCountElement) {
+    const itemCountDisplay = '🛍️ ' + cartStore.getState().itemCnt + ' items in cart';
+    uiStore.dispatch({ type: 'SET_ITEM_COUNT_DISPLAY', payload: itemCountDisplay });
     const previousCount = parseInt(itemCountElement.textContent.match(/\d+/) || 0);
-    itemCountElement.textContent = '🛍️ ' + cartStore.getState().itemCnt + ' items in cart';
+    itemCountElement.textContent = itemCountDisplay;
     if (previousCount !== cartStore.getState().itemCnt) {
       itemCountElement.setAttribute('data-changed', 'true');
     }
@@ -738,6 +799,7 @@ function handleCalculateCartStuff() {
     }
   }
   const stockInfo = document.getElementById('stock-status');
+  uiStore.dispatch({ type: 'SET_STOCK_MESSAGE', payload: stockMsg });
   stockInfo.textContent = stockMsg;
   handleStockInfoUpdate();
   doRenderBonusPoints();
