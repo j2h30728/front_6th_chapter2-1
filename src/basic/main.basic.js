@@ -95,6 +95,32 @@ const productReducer = (state, action) => {
           product.id === action.payload.productId ? { ...product, val: product.originalVal } : product
         ),
       };
+    case 'SET_SALE_STATUS':
+      return {
+        ...state,
+        products: state.products.map((product) =>
+          product.id === action.payload.productId
+            ? {
+                ...product,
+                onSale: action.payload.onSale || false,
+                suggestSale: action.payload.suggestSale || false,
+              }
+            : product
+        ),
+      };
+    case 'RESET_SALE_STATUS':
+      return {
+        ...state,
+        products: state.products.map((product) =>
+          product.id === action.payload.productId
+            ? {
+                ...product,
+                onSale: false,
+                suggestSale: false,
+              }
+            : product
+        ),
+      };
     default:
       return state;
   }
@@ -340,6 +366,8 @@ function main() {
       const luckyItem = productStore.getState().products[luckyIdx];
       if (luckyItem.q > 0 && !luckyItem.onSale) {
         const newPrice = Math.round((luckyItem.originalVal * 80) / 100);
+
+        // 가격 변경
         productStore.dispatch({
           type: 'SET_PRODUCT_PRICE',
           payload: {
@@ -347,15 +375,17 @@ function main() {
             price: newPrice,
           },
         });
+
+        // 상태 변경 (번개세일)
         productStore.dispatch({
-          type: 'SET_PRODUCT_SALE',
+          type: 'SET_SALE_STATUS',
           payload: {
             productId: luckyItem.id,
-            newPrice: newPrice,
             onSale: true,
             suggestSale: false,
           },
         });
+
         alert('⚡번개세일! ' + luckyItem.name + '이(가) 20% 할인 중입니다!');
         onUpdateSelectOptions();
         doUpdatePricesInCart();
@@ -380,6 +410,8 @@ function main() {
         if (suggest) {
           alert('💝 ' + suggest.name + '은(는) 어떠세요? 지금 구매하시면 5% 추가 할인!');
           const newPrice = Math.round((suggest.val * (100 - 5)) / 100);
+
+          // 가격 변경
           productStore.dispatch({
             type: 'SET_PRODUCT_PRICE',
             payload: {
@@ -387,15 +419,17 @@ function main() {
               price: newPrice,
             },
           });
+
+          // 상태 변경 (추천할인)
           productStore.dispatch({
-            type: 'SET_PRODUCT_SALE',
+            type: 'SET_SALE_STATUS',
             payload: {
               productId: suggest.id,
-              newPrice: newPrice,
               onSale: false,
               suggestSale: true,
             },
           });
+
           onUpdateSelectOptions();
           doUpdatePricesInCart();
         }
