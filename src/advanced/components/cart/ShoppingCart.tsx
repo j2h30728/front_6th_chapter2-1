@@ -1,64 +1,16 @@
-import { useState } from 'react';
-
+import { useCart } from '../../hooks';
 import { type Product } from '../../lib/products';
-import { useApp } from '../../lib/store';
+import { getProductDisplayName, getProductPriceClass } from '../../lib/uiUtils';
 import ProductPicker from './ProductPicker';
 
 const ShoppingCart = () => {
-  const { state, dispatch } = useApp();
-  const [errorMsg, setErrorMsg] = useState('');
-
-  const handleQuantityChange = (productId: string, change: number) => {
-    const cartItem = state.cart.items.find((item) => item.id === productId);
-    if (!cartItem) return;
-
-    const { quantity } = cartItem;
-    const newQuantity = quantity + change;
-
-    if (newQuantity <= 0) {
-      dispatch({ type: 'REMOVE_FROM_CART', payload: productId });
-      dispatch({ type: 'INCREASE_STOCK', payload: { productId, quantity } });
-      setErrorMsg('');
-    } else {
-      const product = state.product.products.find((p) => p.id === productId);
-      if (product && newQuantity > product.quantity) {
-        alert('재고가 부족합니다.');
-        return;
-      }
-      dispatch({ type: 'UPDATE_CART_ITEM', payload: { productId, quantity: newQuantity } });
-      dispatch({ type: 'DECREASE_STOCK', payload: { productId, quantity: change } });
-      setErrorMsg('');
-    }
-  };
-
-  const handleRemoveItem = (productId: string) => {
-    const cartItem = state.cart.items.find((item) => item.id === productId);
-    if (cartItem) {
-      const { quantity } = cartItem;
-      dispatch({ type: 'REMOVE_FROM_CART', payload: productId });
-      dispatch({ type: 'INCREASE_STOCK', payload: { productId, quantity } });
-      setErrorMsg('');
-    }
-  };
-
-  const getProductDisplayName = (product: Product) => {
-    const { name, onSale, suggestSale } = product;
-
-    if (onSale && suggestSale) {
-      return `⚡💝${name}`;
-    } else if (onSale) {
-      return `⚡${name}`;
-    } else if (suggestSale) {
-      return `💝${name}`;
-    }
-    return name;
-  };
+  const { cartItems, products, errorMsg, handleQuantityChange, handleRemoveItem } = useCart();
 
   const getProductPriceDisplay = (product: Product) => {
     const { price, discountPrice, onSale, suggestSale } = product;
+    const priceClass = getProductPriceClass(product);
 
     if (onSale || suggestSale) {
-      const priceClass = onSale && suggestSale ? 'text-purple-600' : onSale ? 'text-red-500' : 'text-blue-500';
       return (
         <>
           <span className="line-through text-gray-400">₩{price.toLocaleString()}</span>{' '}
@@ -78,11 +30,11 @@ const ShoppingCart = () => {
         </div>
       )}
       <div id="cart-items">
-        {state.cart.items.length === 0 ? (
+        {cartItems.length === 0 ? (
           <div className="text-center text-gray-500 py-8">장바구니가 비어있습니다.</div>
         ) : (
-          state.cart.items.map((cartItem) => {
-            const product = state.product.products.find((p) => p.id === cartItem.id);
+          cartItems.map((cartItem) => {
+            const product = products.find((p) => p.id === cartItem.id);
             if (!product) return null;
 
             return (

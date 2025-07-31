@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 
-import { STOCK_POLICIES } from '../../lib/constants';
-import { Product } from '../../lib/products';
 import { saleService } from '../../lib/saleService';
 import { useApp } from '../../lib/store';
+import { getOptionClass, getProductDisplayText, getStockStatus } from '../../lib/uiUtils';
 
 const ProductPicker = () => {
   const { state, dispatch } = useApp();
@@ -41,50 +40,8 @@ const ProductPicker = () => {
     dispatch({ type: 'SET_LAST_SELECTED_PRODUCT_ID', payload: selectedProductId });
   };
 
-  // 할인 아이콘 생성
-  const getSaleIcon = (product: Product) => {
-    if (product.onSale && product.suggestSale) return '⚡💝';
-    if (product.onSale) return '⚡';
-    if (product.suggestSale) return '💝';
-    return '';
-  };
-
-  // 상품 표시 텍스트 생성
-  const getProductDisplayText = (product: Product) => {
-    const icon = getSaleIcon(product);
-    const { name, price, discountPrice, quantity, onSale, suggestSale } = product;
-
-    if (quantity === 0) {
-      return `${name} - ${price.toLocaleString()}원 (품절)`;
-    }
-
-    const stockStatus = quantity > 0 && quantity < STOCK_POLICIES.LOW_STOCK_THRESHOLD ? ' (재고 부족)' : '';
-
-    if (onSale && suggestSale) {
-      return `${icon}${name} - ${price.toLocaleString()}원 → ${discountPrice.toLocaleString()}원 (25% SUPER SALE!)${stockStatus}`;
-    } else if (onSale) {
-      return `${icon}${name} - ${price.toLocaleString()}원 → ${discountPrice.toLocaleString()}원 (20% SALE!)${stockStatus}`;
-    } else if (suggestSale) {
-      return `${icon}${name} - ${price.toLocaleString()}원 → ${discountPrice.toLocaleString()}원 (5% 추천할인!)${stockStatus}`;
-    } else {
-      return `${name} - ${price.toLocaleString()}원${stockStatus}`;
-    }
-  };
-
-  // 옵션 클래스 결정
-  const getOptionClass = (product: Product) => {
-    const { quantity, onSale, suggestSale } = product;
-
-    if (quantity === 0) return 'text-gray-400';
-    if (onSale && suggestSale) return 'text-purple-600 font-bold';
-    if (onSale) return 'text-red-500 font-bold';
-    if (suggestSale) return 'text-blue-500 font-bold';
-    return '';
-  };
-
   // 총 재고 계산
-  const totalStock = state.product.products.reduce((total, product) => total + product.quantity, 0);
-  const isLowStock = totalStock < 50;
+  const { totalStock, isLowStock } = getStockStatus(state.product.products);
 
   return (
     <div className="mb-6 pb-6 border-b border-gray-200">
