@@ -15,17 +15,17 @@ export const createCartObserver = (cartStore) => {
 
     // 총액 업데이트
     const totalDiv = document.getElementById('total-amount');
-    if (totalDiv) {
-      totalDiv.textContent = formatPrice(state.totalAmount);
-    }
+    if (!totalDiv) return;
+
+    totalDiv.textContent = formatPrice(state.totalAmount);
 
     // 포인트 업데이트
     const points = Math.floor(state.totalAmount / 1000);
     const pointsDisplay = points > 0 ? `적립 포인트: ${points}p` : '적립 포인트: 0p';
     const loyaltyPointsDiv = getElement('loyalty-points');
-    if (loyaltyPointsDiv) {
-      loyaltyPointsDiv.textContent = pointsDisplay;
-      loyaltyPointsDiv.style.display = 'block';
-    }
+    if (!loyaltyPointsDiv) return;
+
+    loyaltyPointsDiv.textContent = pointsDisplay;
+    loyaltyPointsDiv.style.display = 'block';
   });
 };

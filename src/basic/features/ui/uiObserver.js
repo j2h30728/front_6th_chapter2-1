@@ -12,17 +12,17 @@ export const createUIObserver = (uiStore, uiRenderer) => {
     uiRenderer.renderManualOverlay(state.isManualOverlayVisible);
 
     const tuesdaySpecial = getElement('tuesday-special');
-    if (tuesdaySpecial) {
-      if (state.isTuesdaySpecialVisible) {
-        tuesdaySpecial.classList.remove('hidden');
-      } else {
-        tuesdaySpecial.classList.add('hidden');
-      }
+    if (!tuesdaySpecial) return;
+
+    if (state.isTuesdaySpecialVisible) {
+      tuesdaySpecial.classList.remove('hidden');
+    } else {
+      tuesdaySpecial.classList.add('hidden');
     }
 
     const stockInfo = getElement('stock-status');
-    if (stockInfo) {
-      stockInfo.textContent = state.stockMessage;
-    }
+    if (!stockInfo) return;
+
+    stockInfo.textContent = state.stockMessage;
   });
 };
