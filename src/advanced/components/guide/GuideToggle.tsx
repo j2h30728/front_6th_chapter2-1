@@ -1,17 +1,8 @@
-import { useState } from 'react';
-
+import { useModal } from '../../hooks';
 import ShoppingGuide from './ShoppingGuide';
 
 const GuideToggle = () => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const handleOpenToggle = () => {
-    setIsOpen(!isOpen);
-  };
-
-  const handleClose = () => {
-    setIsOpen(false);
-  };
+  const { isOpen, handleToggle, handleClose } = useModal();
 
   return (
     <>
@@ -19,7 +10,7 @@ const GuideToggle = () => {
         id="manual-toggle"
         data-testid="guide-toggle-btn"
         className="fixed top-4 right-4 bg-black text-white p-3 rounded-full hover:bg-gray-900 transition-colors z-50"
-        onClick={handleOpenToggle}
+        onClick={handleToggle}
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path

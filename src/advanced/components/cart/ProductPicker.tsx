@@ -1,26 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
-import { useCart } from '../../hooks';
-import { saleService } from '../../lib/saleService';
-import { useApp } from '../../lib/store';
+import { useCart, useSaleService } from '../../hooks';
 import { getOptionClass, getProductDisplayText, getStockStatus } from '../../lib/uiUtils';
 
 const ProductPicker = () => {
-  const { state, dispatch } = useApp();
   const { handleAddToCart: addToCart } = useCart();
-  const [selectedProductId, setSelectedProductId] = useState(state.product.products[0]?.id || '');
-
-  // 세일 서비스 시작
-  useEffect(() => {
-    saleService.startAllSales(dispatch, state.product.products, state.cart.lastSelectedProductId || '');
-  }, [dispatch, state.product.products, state.cart.lastSelectedProductId]);
+  const { products } = useSaleService();
+  const [selectedProductId, setSelectedProductId] = useState(products[0]?.id || '');
 
   const handleAddToCart = () => {
     addToCart(selectedProductId);
   };
 
   // 총 재고 계산
-  const { totalStock, isLowStock } = getStockStatus(state.product.products);
+  const { totalStock, isLowStock } = getStockStatus(products);
 
   return (
     <div className="mb-6 pb-6 border-b border-gray-200">
@@ -32,7 +25,7 @@ const ProductPicker = () => {
           isLowStock ? 'border-orange-500' : ''
         }`}
       >
-        {state.product.products.map((product) => (
+        {products.map((product) => (
           <option
             key={product.id}
             value={product.id}
