@@ -21,11 +21,13 @@ import {
   TIMER_SETTINGS,
   UI_CONSTANTS,
 } from './constants/index.js';
+import cartStore from './features/cart/cartStore.js';
 // 🛠️ 순수 유틸리티 함수들 import
 import { CartUtils } from './features/cart/cartUtils.js';
+import createProductStore from './features/product/productStore.js';
 import { ProductUtils } from './features/product/productUtils.js';
+import uiStore from './features/ui/uiStore.js';
 import createObserver from './utils/createObserver.js';
-import createStore from './utils/createStore.js';
 import { formatNumber, formatPrice, safeParseInt, when, whenValue } from './utils/dataUtils.js';
 import { getElement, querySelector, setInnerHTML, setStyle, setTextContent } from './utils/domUtils.js';
 
@@ -129,6 +131,11 @@ const transformServerDataToClientState = (serverData) => {
 const createInitialProductState = () => {
   return transformServerDataToClientState(PRODUCT_DATA);
 };
+
+// 🏪 Product Store 초기화
+const productStore = createProductStore({
+  products: createInitialProductState(),
+});
 
 // 🏪 할인 계산 모듈
 const discountCalculator = {
@@ -475,176 +482,6 @@ const eventHandlers = {
     });
   },
 };
-
-// 🏪 Cart Store - 장바구니 상태 관리
-const cartReducer = (state, action) => {
-  switch (action.type) {
-    case 'SET_ITEM_COUNT':
-      return { ...state, itemCnt: action.payload };
-    case 'RESET_ITEM_COUNT':
-      return { ...state, itemCnt: UI_CONSTANTS.DEFAULT_ITEM_COUNT };
-    case 'ADD_TO_ITEM_COUNT':
-      return { ...state, itemCnt: state.itemCnt + action.payload };
-    case 'SET_TOTAL_AMOUNT':
-      return { ...state, totalAmt: action.payload };
-    case 'ADD_TO_TOTAL_AMOUNT':
-      return { ...state, totalAmt: state.totalAmt + action.payload };
-    case 'SET_LAST_SELECTED':
-      return { ...state, lastSel: action.payload };
-    case 'RESET_CART':
-      return {
-        ...state,
-        itemCnt: UI_CONSTANTS.DEFAULT_ITEM_COUNT,
-        totalAmt: UI_CONSTANTS.DEFAULT_TOTAL_AMOUNT,
-        lastSel: null,
-      };
-    default:
-      return state;
-  }
-};
-
-const cartStore = createStore(cartReducer, {
-  itemCnt: UI_CONSTANTS.DEFAULT_ITEM_COUNT,
-  totalAmt: UI_CONSTANTS.DEFAULT_TOTAL_AMOUNT,
-  lastSel: null,
-});
-
-// 🏪 Product Store - 상품 재고 및 상태 관리
-const productReducer = (state, action) => {
-  switch (action.type) {
-    case 'DECREASE_STOCK':
-      return {
-        ...state,
-        products: state.products.map((product) =>
-          product.id === action.payload.productId
-            ? { ...product, q: Math.max(0, product.q - action.payload.quantity) }
-            : product
-        ),
-      };
-    case 'INCREASE_STOCK':
-      return {
-        ...state,
-        products: state.products.map((product) =>
-          product.id === action.payload.productId ? { ...product, q: product.q + action.payload.quantity } : product
-        ),
-      };
-    case 'SET_PRODUCT_SALE':
-      return {
-        ...state,
-        products: state.products.map((product) =>
-          product.id === action.payload.productId
-            ? {
-                ...product,
-                val: action.payload.newPrice,
-                onSale: action.payload.onSale,
-                suggestSale: action.payload.suggestSale || product.suggestSale,
-              }
-            : product
-        ),
-      };
-    case 'RESET_PRODUCT_SALE':
-      return {
-        ...state,
-        products: state.products.map((product) =>
-          product.id === action.payload.productId
-            ? {
-                ...product,
-                val: product.originalVal,
-                onSale: false,
-                suggestSale: false,
-              }
-            : product
-        ),
-      };
-    case 'SET_PRODUCT_PRICE':
-      return {
-        ...state,
-        products: state.products.map((product) =>
-          product.id === action.payload.productId ? { ...product, val: action.payload.price } : product
-        ),
-      };
-    case 'RESET_PRODUCT_PRICE':
-      return {
-        ...state,
-        products: state.products.map((product) =>
-          product.id === action.payload.productId ? { ...product, val: product.originalVal } : product
-        ),
-      };
-    case 'SET_SALE_STATUS':
-      return {
-        ...state,
-        products: state.products.map((product) =>
-          product.id === action.payload.productId
-            ? {
-                ...product,
-                onSale: action.payload.onSale || false,
-                suggestSale: action.payload.suggestSale || false,
-              }
-            : product
-        ),
-      };
-    case 'RESET_SALE_STATUS':
-      return {
-        ...state,
-        products: state.products.map((product) =>
-          product.id === action.payload.productId
-            ? {
-                ...product,
-                onSale: false,
-                suggestSale: false,
-              }
-            : product
-        ),
-      };
-    default:
-      return state;
-  }
-};
-
-const productStore = createStore(productReducer, {
-  products: createInitialProductState(),
-});
-
-// 🏪 UI Store - UI 상태 관리
-const uiReducer = (state, action) => {
-  switch (action.type) {
-    case 'TOGGLE_MANUAL_OVERLAY':
-      return { ...state, isManualOverlayVisible: !state.isManualOverlayVisible };
-    case 'SET_MANUAL_OVERLAY_VISIBLE':
-      return { ...state, isManualOverlayVisible: action.payload };
-    case 'TOGGLE_TUESDAY_SPECIAL':
-      return { ...state, isTuesdaySpecialVisible: action.payload };
-    case 'SET_DISCOUNT_INFO_VISIBLE':
-      return { ...state, isDiscountInfoVisible: action.payload };
-    case 'SET_STOCK_MESSAGE':
-      return { ...state, stockMessage: action.payload };
-    case 'SET_ITEM_COUNT_DISPLAY':
-      return { ...state, itemCountDisplay: action.payload };
-    case 'SET_POINTS_DISPLAY':
-      return { ...state, pointsDisplay: action.payload };
-    case 'RESET_UI_STATE':
-      return {
-        ...state,
-        isManualOverlayVisible: false,
-        isTuesdaySpecialVisible: false,
-        isDiscountInfoVisible: false,
-        stockMessage: '',
-        itemCountDisplay: UI_CONSTANTS.DEFAULT_ITEM_COUNT_DISPLAY,
-        pointsDisplay: UI_CONSTANTS.DEFAULT_POINTS_DISPLAY,
-      };
-    default:
-      return state;
-  }
-};
-
-const uiStore = createStore(uiReducer, {
-  isManualOverlayVisible: false,
-  isTuesdaySpecialVisible: false,
-  isDiscountInfoVisible: false,
-  stockMessage: '',
-  itemCountDisplay: UI_CONSTANTS.DEFAULT_ITEM_COUNT_DISPLAY,
-  pointsDisplay: UI_CONSTANTS.DEFAULT_POINTS_DISPLAY,
-});
 
 // 🧩 컴포넌트 조합 함수
 const createMainContent = () => /*html*/ `
