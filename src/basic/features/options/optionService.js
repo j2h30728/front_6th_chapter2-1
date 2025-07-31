@@ -1,3 +1,5 @@
+import { STOCK_CALCULATION } from '../../constants/index.js';
+
 /**
  * 옵션 관리 서비스
  */
@@ -9,58 +11,81 @@ export const optionService = {
    * @param {Object} UI_CONSTANTS - UI 상수
    */
   updateSelectOptions: (productStore, ProductUtils, UI_CONSTANTS) => {
-    const sel = document.getElementById('product-select');
+    const selectElement = document.getElementById('product-select');
+    if (!selectElement) return;
 
-    const totalStock = productStore.getState().products.reduce((total, product) => total + product.stockQuantity, 0);
+    const totalStock = calculateTotalStock(productStore);
+    const optionHTML = createAllOptionsHTML(productStore, ProductUtils);
 
-    // 상품을 option HTML로 변환하는 함수
-    const createOptionHTML = (item) => {
-      const getItemSaleIcon = () => ProductUtils.getSaleIcon(item);
-
-      const getOptionClass = () => {
-        if (item.stockQuantity === 0) return 'text-gray-400';
-        if (item.onSale && item.suggestSale) return 'text-purple-600 font-bold';
-        if (item.onSale) return 'text-red-500 font-bold';
-        if (item.suggestSale) return 'text-blue-500 font-bold';
-        return '';
-      };
-
-      const getOptionDisplayText = () => {
-        const icon = getItemSaleIcon();
-        if (item.stockQuantity === 0) {
-          return `${item.name} - ${item.price}원 (품절)`;
-        }
-
-        if (item.onSale && item.suggestSale) {
-          return `${icon}${item.name} - ${item.originalPrice}원 → ${item.price}원 (25% SUPER SALE!)`;
-        } else if (item.onSale) {
-          return `${icon}${item.name} - ${item.originalPrice}원 → ${item.price}원 (20% SALE!)`;
-        } else if (item.suggestSale) {
-          return `${icon}${item.name} - ${item.originalPrice}원 → ${item.price}원 (5% 추천할인!)`;
-        } else {
-          return `${item.name} - ${item.price}원`;
-        }
-      };
-
-      const getOptionDisabled = () => {
-        return `${item.stockQuantity === 0 ? 'disabled' : ''}`;
-      };
-
-      return `
-        <option
-          value="${item.id}"
-          class="${getOptionClass()}"
-          ${getOptionDisabled()}
-        >
-          ${getOptionDisplayText()}
-        </option>
-      `;
-    };
-
-    // 템플릿 리터럴로 옵션들 생성
-    sel.innerHTML = productStore.getState().products.map(createOptionHTML).join('');
-
-    // 재고 상태에 따른 스타일 적용
-    sel.style.borderColor = totalStock < UI_CONSTANTS.TOTAL_STOCK_WARNING_THRESHOLD ? 'orange' : '';
+    selectElement.innerHTML = optionHTML;
+    applyStockWarningStyle(selectElement, totalStock, UI_CONSTANTS);
   },
+};
+
+// 총 재고 계산 함수
+const calculateTotalStock = (productStore) => {
+  return productStore.getState().products.reduce((total, product) => total + product.stockQuantity, 0);
+};
+
+// 모든 옵션 HTML 생성 함수
+const createAllOptionsHTML = (productStore, ProductUtils) => {
+  return productStore
+    .getState()
+    .products.map((item) => createOptionHTML(item, ProductUtils))
+    .join('');
+};
+
+// 개별 옵션 HTML 생성 함수
+const createOptionHTML = (item, ProductUtils) => {
+  const optionClass = getOptionClass(item);
+  const displayText = getOptionDisplayText(item, ProductUtils);
+  const disabledAttr = getOptionDisabled(item);
+
+  return `
+    <option
+      value="${item.id}"
+      class="${optionClass}"
+      ${disabledAttr}
+    >
+      ${displayText}
+    </option>
+  `;
+};
+
+// 옵션 클래스 결정 함수
+const getOptionClass = (item) => {
+  if (item.stockQuantity === STOCK_CALCULATION.ZERO_STOCK) return 'text-gray-400';
+  if (item.onSale && item.suggestSale) return 'text-purple-600 font-bold';
+  if (item.onSale) return 'text-red-500 font-bold';
+  if (item.suggestSale) return 'text-blue-500 font-bold';
+  return '';
+};
+
+// 옵션 표시 텍스트 생성 함수
+const getOptionDisplayText = (item, ProductUtils) => {
+  const icon = ProductUtils.getSaleIcon(item);
+
+  if (item.stockQuantity === STOCK_CALCULATION.ZERO_STOCK) {
+    return `${item.name} - ${item.price}원 (품절)`;
+  }
+
+  if (item.onSale && item.suggestSale) {
+    return `${icon}${item.name} - ${item.originalPrice}원 → ${item.price}원 (25% SUPER SALE!)`;
+  } else if (item.onSale) {
+    return `${icon}${item.name} - ${item.originalPrice}원 → ${item.price}원 (20% SALE!)`;
+  } else if (item.suggestSale) {
+    return `${icon}${item.name} - ${item.originalPrice}원 → ${item.price}원 (5% 추천할인!)`;
+  } else {
+    return `${item.name} - ${item.price}원`;
+  }
+};
+
+// 옵션 비활성화 속성 결정 함수
+const getOptionDisabled = (item) => {
+  return item.stockQuantity === STOCK_CALCULATION.ZERO_STOCK ? 'disabled' : '';
+};
+
+// 재고 경고 스타일 적용 함수
+const applyStockWarningStyle = (selectElement, totalStock, UI_CONSTANTS) => {
+  selectElement.style.borderColor = totalStock < UI_CONSTANTS.TOTAL_STOCK_WARNING_THRESHOLD ? 'orange' : '';
 };
