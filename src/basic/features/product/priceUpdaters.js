@@ -18,6 +18,7 @@ export const updateCartItemPrice = (cartItem, product) => {
   if (priceElement) {
     priceElement.innerHTML = priceHTML;
   }
+
   if (nameElement) {
     nameElement.textContent = nameText;
   }

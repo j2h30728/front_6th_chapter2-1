@@ -51,9 +51,12 @@ export const ProductUtils = {
   createStockMessage(item) {
     if (item.stockQuantity === 0) {
       return `${item.name}: 품절`;
-    } else if (item.stockQuantity < 5) {
+    }
+
+    if (item.stockQuantity < 5) {
       return `${item.name}: 재고 부족 (${item.stockQuantity}개 남음)`;
     }
+
     return null; // 재고 충분한 경우
   },
 };
