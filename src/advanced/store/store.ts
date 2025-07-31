@@ -1,6 +1,6 @@
 import React, { createContext, ReactNode, useContext, useReducer } from 'react';
 
-import { createInitialProducts, type Product } from './products';
+import { createInitialProducts, type Product } from '../lib/products';
 
 // Types
 export interface CartItem {

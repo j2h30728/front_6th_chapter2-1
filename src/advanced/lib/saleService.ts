@@ -1,6 +1,6 @@
+import { AppAction } from '../store';
 import { DISCOUNT_POLICIES, TIMER_SETTINGS } from './constants';
 import { Product } from './products';
-import { AppAction } from './store';
 
 /**
  * 세일 서비스

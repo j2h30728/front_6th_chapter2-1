@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { useApp } from '../lib/store';
+import { useApp } from '../store';
 
 export const useCart = () => {
   const { state, dispatch } = useApp();

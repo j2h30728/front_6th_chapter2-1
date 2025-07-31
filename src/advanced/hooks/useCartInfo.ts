@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { useApp } from '../lib/store';
+import { useApp } from '../store';
 
 export const useCartInfo = () => {
   const { state } = useApp();

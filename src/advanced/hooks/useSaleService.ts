@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
 import { saleService } from '../lib/saleService';
-import { useApp } from '../lib/store';
+import { useApp } from '../store';
 
 export const useSaleService = () => {
   const { state, dispatch } = useApp();

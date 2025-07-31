@@ -8,7 +8,7 @@ import {
   createPointsDetail,
   getCartItemsWithDetails,
 } from '../lib/calculationService';
-import { useApp } from '../lib/store';
+import { useApp } from '../store';
 
 export const useOrderCalculation = () => {
   const { state } = useApp();

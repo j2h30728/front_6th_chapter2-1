@@ -1,6 +1,6 @@
+import { type CartItem } from '../store';
 import { DISCOUNT_POLICIES, POINT_POLICIES, PRODUCT_IDS, UI_CONSTANTS } from './constants';
 import { type Product } from './products';
-import { type CartItem } from './store';
 
 export interface CartItemWithDetails extends Product {
   quantity: number;
