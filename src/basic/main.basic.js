@@ -70,13 +70,77 @@ const STOCK_POLICIES = {
   OUT_OF_STOCK: 0, // 0개 시 품절
 };
 
+// 🏪 상품 정보 설정
+const PRODUCT_DATA = {
+  KEYBOARD: {
+    name: '버그 없애는 키보드',
+    price: 10000,
+    stock: 50,
+  },
+  MOUSE: {
+    name: '생산성 폭발 마우스',
+    price: 20000,
+    stock: 30,
+  },
+  MONITOR_ARM: {
+    name: '거북목 탈출 모니터암',
+    price: 30000,
+    stock: 20,
+  },
+  LAPTOP_POUCH: {
+    name: '에러 방지 노트북 파우치',
+    price: 15000,
+    stock: 0,
+  },
+  SPEAKER: {
+    name: '코딩할 때 듣는 Lo-Fi 스피커',
+    price: 25000,
+    stock: 10,
+  },
+};
+
+// 🏪 UI 설정
+const UI_CONSTANTS = {
+  DEFAULT_ITEM_COUNT: 0,
+  DEFAULT_TOTAL_AMOUNT: 0,
+  DEFAULT_ITEM_COUNT_DISPLAY: '🛍️ 0 items in cart',
+  DEFAULT_POINTS_DISPLAY: '적립 포인트: 0p',
+  QUANTITY_THRESHOLD_FOR_BOLD: 10,
+  TOTAL_STOCK_WARNING_THRESHOLD: 50,
+};
+
+// 🏪 타이머 설정
+const TIMER_SETTINGS = {
+  LIGHTNING_SALE_INTERVAL: 30000, // 30초
+  LIGHTNING_SALE_DELAY_MAX: 10000, // 최대 10초 지연
+  RECOMMENDED_SALE_INTERVAL: 60000, // 60초
+  RECOMMENDED_SALE_DELAY_MAX: 20000, // 최대 20초 지연
+};
+
+// 🏪 데이터 변환 함수들
+const transformServerDataToClientState = (serverData) => {
+  return Object.entries(serverData).map(([key, data]) => ({
+    id: PRODUCT_IDS[key],
+    name: data.name,
+    val: data.price,
+    originalVal: data.price,
+    q: data.stock,
+    onSale: false,
+    suggestSale: false,
+  }));
+};
+
+const createInitialProductState = () => {
+  return transformServerDataToClientState(PRODUCT_DATA);
+};
+
 // 🏪 Cart Store - 장바구니 상태 관리
 const cartReducer = (state, action) => {
   switch (action.type) {
     case 'SET_ITEM_COUNT':
       return { ...state, itemCnt: action.payload };
     case 'RESET_ITEM_COUNT':
-      return { ...state, itemCnt: 0 };
+      return { ...state, itemCnt: UI_CONSTANTS.DEFAULT_ITEM_COUNT };
     case 'ADD_TO_ITEM_COUNT':
       return { ...state, itemCnt: state.itemCnt + action.payload };
     case 'SET_TOTAL_AMOUNT':
@@ -86,15 +150,20 @@ const cartReducer = (state, action) => {
     case 'SET_LAST_SELECTED':
       return { ...state, lastSel: action.payload };
     case 'RESET_CART':
-      return { ...state, itemCnt: 0, totalAmt: 0, lastSel: null };
+      return {
+        ...state,
+        itemCnt: UI_CONSTANTS.DEFAULT_ITEM_COUNT,
+        totalAmt: UI_CONSTANTS.DEFAULT_TOTAL_AMOUNT,
+        lastSel: null,
+      };
     default:
       return state;
   }
 };
 
 const cartStore = createStore(cartReducer, {
-  itemCnt: 0,
-  totalAmt: 0,
+  itemCnt: UI_CONSTANTS.DEFAULT_ITEM_COUNT,
+  totalAmt: UI_CONSTANTS.DEFAULT_TOTAL_AMOUNT,
   lastSel: null,
 });
 
@@ -191,53 +260,7 @@ const productReducer = (state, action) => {
 };
 
 const productStore = createStore(productReducer, {
-  products: [
-    {
-      id: PRODUCT_IDS.KEYBOARD,
-      name: '버그 없애는 키보드',
-      val: 10000,
-      originalVal: 10000,
-      q: 50,
-      onSale: false,
-      suggestSale: false,
-    },
-    {
-      id: PRODUCT_IDS.MOUSE,
-      name: '생산성 폭발 마우스',
-      val: 20000,
-      originalVal: 20000,
-      q: 30,
-      onSale: false,
-      suggestSale: false,
-    },
-    {
-      id: PRODUCT_IDS.MONITOR_ARM,
-      name: '거북목 탈출 모니터암',
-      val: 30000,
-      originalVal: 30000,
-      q: 20,
-      onSale: false,
-      suggestSale: false,
-    },
-    {
-      id: PRODUCT_IDS.LAPTOP_POUCH,
-      name: '에러 방지 노트북 파우치',
-      val: 15000,
-      originalVal: 15000,
-      q: 0,
-      onSale: false,
-      suggestSale: false,
-    },
-    {
-      id: PRODUCT_IDS.SPEAKER,
-      name: `코딩할 때 듣는 Lo-Fi 스피커`,
-      val: 25000,
-      originalVal: 25000,
-      q: 10,
-      onSale: false,
-      suggestSale: false,
-    },
-  ],
+  products: createInitialProductState(),
 });
 
 // 🏪 UI Store - UI 상태 관리
@@ -264,8 +287,8 @@ const uiReducer = (state, action) => {
         isTuesdaySpecialVisible: false,
         isDiscountInfoVisible: false,
         stockMessage: '',
-        itemCountDisplay: '🛍️ 0 items in cart',
-        pointsDisplay: '적립 포인트: 0p',
+        itemCountDisplay: UI_CONSTANTS.DEFAULT_ITEM_COUNT_DISPLAY,
+        pointsDisplay: UI_CONSTANTS.DEFAULT_POINTS_DISPLAY,
       };
     default:
       return state;
@@ -277,8 +300,8 @@ const uiStore = createStore(uiReducer, {
   isTuesdaySpecialVisible: false,
   isDiscountInfoVisible: false,
   stockMessage: '',
-  itemCountDisplay: '🛍️ 0 items in cart',
-  pointsDisplay: '적립 포인트: 0p',
+  itemCountDisplay: UI_CONSTANTS.DEFAULT_ITEM_COUNT_DISPLAY,
+  pointsDisplay: UI_CONSTANTS.DEFAULT_POINTS_DISPLAY,
 });
 
 // 🧩 컴포넌트들 - React스러운 구조
@@ -540,14 +563,16 @@ function main() {
   onUpdateSelectOptions();
   handleCalculateCartStuff();
 
-  const lightningDelay = Math.random() * 10000;
+  const lightningDelay = Math.random() * TIMER_SETTINGS.LIGHTNING_SALE_DELAY_MAX;
 
   setTimeout(() => {
     setInterval(function () {
       const luckyIdx = Math.floor(Math.random() * productStore.getState().products.length);
       const luckyItem = productStore.getState().products[luckyIdx];
       if (luckyItem.q > 0 && !luckyItem.onSale) {
-        const newPrice = Math.round((luckyItem.originalVal * 80) / 100);
+        const newPrice = Math.round(
+          luckyItem.originalVal * (1 - DISCOUNT_POLICIES.SPECIAL_DISCOUNTS.LIGHTNING_SALE.RATE)
+        );
 
         // 가격 변경
         productStore.dispatch({
@@ -572,7 +597,7 @@ function main() {
         onUpdateSelectOptions();
         doUpdatePricesInCart();
       }
-    }, 30000);
+    }, TIMER_SETTINGS.LIGHTNING_SALE_INTERVAL);
   }, lightningDelay);
 
   setTimeout(function () {
@@ -591,7 +616,7 @@ function main() {
         }
         if (suggest) {
           alert('💝 ' + suggest.name + '은(는) 어떠세요? 지금 구매하시면 5% 추가 할인!');
-          const newPrice = Math.round((suggest.val * (100 - 5)) / 100);
+          const newPrice = Math.round(suggest.val * (1 - DISCOUNT_POLICIES.SPECIAL_DISCOUNTS.RECOMMENDED_SALE.RATE));
 
           // 가격 변경
           productStore.dispatch({
@@ -615,8 +640,8 @@ function main() {
           doUpdatePricesInCart();
         }
       }
-    }, 60000);
-  }, Math.random() * 20000);
+    }, TIMER_SETTINGS.RECOMMENDED_SALE_INTERVAL);
+  }, Math.random() * TIMER_SETTINGS.RECOMMENDED_SALE_DELAY_MAX);
 }
 
 function onUpdateSelectOptions() {
@@ -679,7 +704,7 @@ function onUpdateSelectOptions() {
   sel.innerHTML = productStore.getState().products.map(createOptionHTML).join('');
 
   // 재고 상태에 따른 스타일 적용
-  sel.style.borderColor = totalStock < 50 ? 'orange' : '';
+  sel.style.borderColor = totalStock < UI_CONSTANTS.TOTAL_STOCK_WARNING_THRESHOLD ? 'orange' : '';
 }
 
 // 📊 주문 요약 HTML 헬퍼 함수들
@@ -745,7 +770,7 @@ const calculateCartItems = (cartItems) => {
     subtotal += itemTotal;
 
     // 10개 이상 구매 시 할인 적용
-    if (quantity >= 10) {
+    if (quantity >= UI_CONSTANTS.QUANTITY_THRESHOLD_FOR_BOLD) {
       const discount = DISCOUNT_POLICIES.INDIVIDUAL_DISCOUNTS[curItem.id] || 0;
       if (discount > 0) {
         itemDiscounts.push({ name: curItem.name, discount: discount * 100 });
@@ -979,7 +1004,7 @@ const updateCartItemStyles = (cartItems) => {
 
     priceElems.forEach(function (elem) {
       if (elem.classList.contains('text-lg')) {
-        elem.style.fontWeight = quantity >= 10 ? 'bold' : 'normal';
+        elem.style.fontWeight = quantity >= UI_CONSTANTS.QUANTITY_THRESHOLD_FOR_BOLD ? 'bold' : 'normal';
       }
     });
   }
