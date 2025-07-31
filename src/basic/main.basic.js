@@ -28,33 +28,9 @@ import { createStockMessage, findProductById, getPriceHTML, getSaleIcon } from '
 import createObserver from './utils/createObserver.js';
 import createStore from './utils/createStore.js';
 import { formatNumber, formatPrice, safeParseInt, when, whenValue } from './utils/dataUtils.js';
-import {
-  getElement,
-  getElementSafely,
-  querySelector,
-  setInnerHTML,
-  setStyle,
-  setTextContent,
-  toggleClass,
-} from './utils/domUtils.js';
+import { getElement, querySelector, setInnerHTML, setStyle, setTextContent } from './utils/domUtils.js';
 
-// 🛠️ 순수 유틸리티 함수들 (기존 호환성을 위한 래퍼)
-const utils = {
-  getElement,
-  getElementSafely,
-  querySelector,
-  setTextContent,
-  setInnerHTML,
-  toggleClass,
-  setStyle,
-  formatNumber,
-  formatPrice,
-  safeParseInt,
-  when,
-  whenValue,
-};
-
-// 🎯 도메인별 함수들 (별도로 사용)
+// 🎯 도메인별 함수들
 const domainUtils = {
   getQuantityFromCartItem,
   setQuantityToCartItem,
@@ -69,22 +45,22 @@ const domainUtils = {
 const uiRenderer = {
   // 상태 기반 UI 업데이트
   renderCartDisplay: (totalItems, finalTotal) => {
-    utils.setTextContent('item-count', `🛍️ ${totalItems} items in cart`);
+    setTextContent('item-count', `🛍️ ${totalItems} items in cart`);
 
-    const totalDiv = utils.querySelector(utils.getElement('cart-total'), '.text-2xl');
+    const totalDiv = querySelector(getElement('cart-total'), '.text-2xl');
     if (totalDiv) {
-      totalDiv.textContent = utils.formatPrice(finalTotal);
+      totalDiv.textContent = formatPrice(finalTotal);
     }
   },
 
   renderPointsDisplay: (totalPoints) => {
-    const pointsDisplay = utils.whenValue(totalPoints > 0, `적립 포인트: ${totalPoints}p`, '적립 포인트: 0p');
-    utils.setTextContent('loyalty-points', pointsDisplay);
-    utils.setStyle('loyalty-points', 'display', 'block');
+    const pointsDisplay = whenValue(totalPoints > 0, `적립 포인트: ${totalPoints}p`, '적립 포인트: 0p');
+    setTextContent('loyalty-points', pointsDisplay);
+    setStyle('loyalty-points', 'display', 'block');
   },
 
   renderTuesdaySpecial: (isTuesday, finalTotal) => {
-    const tuesdaySpecial = utils.getElement('tuesday-special');
+    const tuesdaySpecial = getElement('tuesday-special');
     if (tuesdaySpecial) {
       if (isTuesday && finalTotal > 0) {
         tuesdaySpecial.classList.remove('hidden');
@@ -96,15 +72,15 @@ const uiRenderer = {
 
   renderStockMessages: (stockMessages) => {
     const stockMsg = stockMessages.join('\n');
-    utils.setTextContent('stock-status', stockMsg);
+    setTextContent('stock-status', stockMsg);
   },
 
   renderSummaryDetails: (summaryItems) => {
-    utils.setInnerHTML('summary-details', summaryItems.join(''));
+    setInnerHTML('summary-details', summaryItems.join(''));
   },
 
   renderDiscountInfo: (totalDiscountRate, savedAmount) => {
-    const discountInfoDiv = utils.getElement('discount-info');
+    const discountInfoDiv = getElement('discount-info');
     if (totalDiscountRate > 0 && savedAmount > 0) {
       discountInfoDiv.innerHTML = /*html*/ `
         <div class="bg-green-500/20 rounded-lg p-3">
@@ -112,7 +88,7 @@ const uiRenderer = {
             <span class="text-xs uppercase tracking-wide text-green-400">총 할인율</span>
             <span class="text-sm font-medium text-green-400">${(totalDiscountRate * 100).toFixed(1)}%</span>
           </div>
-          <div class="text-2xs text-gray-300">₩${utils.formatNumber(savedAmount)} 할인되었습니다</div>
+          <div class="text-2xs text-gray-300">₩${formatNumber(savedAmount)} 할인되었습니다</div>
         </div>
       `;
     } else {
@@ -127,26 +103,22 @@ const uiRenderer = {
 
       priceElems.forEach((elem) => {
         if (elem.classList.contains('text-lg')) {
-          elem.style.fontWeight = utils.whenValue(
-            quantity >= UI_CONSTANTS.QUANTITY_THRESHOLD_FOR_BOLD,
-            'bold',
-            'normal'
-          );
+          elem.style.fontWeight = whenValue(quantity >= UI_CONSTANTS.QUANTITY_THRESHOLD_FOR_BOLD, 'bold', 'normal');
         }
       });
     });
   },
 
   renderManualOverlay: (isVisible) => {
-    const manualOverlay = utils.getElement('manual-overlay');
-    const manualColumn = utils.getElement('manual-column');
+    const manualOverlay = getElement('manual-overlay');
+    const manualColumn = getElement('manual-column');
 
-    utils.when(isVisible, () => {
+    when(isVisible, () => {
       manualOverlay.classList.remove('hidden');
       manualColumn.classList.remove('translate-x-full');
     });
 
-    utils.when(!isVisible, () => {
+    when(!isVisible, () => {
       manualOverlay.classList.add('hidden');
       manualColumn.classList.add('translate-x-full');
     });
@@ -397,7 +369,7 @@ const eventHandlers = {
 
   // 장바구니 추가 이벤트 핸들러
   handleAddToCart: () => {
-    const sel = utils.getElement('product-select');
+    const sel = getElement('product-select');
     const selItem = sel.value;
     const hasItem = productStore.getState().products.some((product) => product.id === selItem);
 
@@ -420,12 +392,12 @@ const eventHandlers = {
     const tgt = event.target;
     if (tgt.classList.contains('quantity-change') || tgt.classList.contains('remove-item')) {
       const prodId = tgt.dataset.productId;
-      const itemElem = utils.getElement(prodId);
+      const itemElem = getElement(prodId);
       const prod = domainUtils.findProductById(prodId);
 
       if (tgt.classList.contains('quantity-change')) {
         // 수량 변경
-        const qtyChange = utils.safeParseInt(tgt.dataset.change);
+        const qtyChange = safeParseInt(tgt.dataset.change);
         const currentQty = domainUtils.getQuantityFromCartItem(itemElem);
         const newQty = currentQty + qtyChange;
 
@@ -461,10 +433,10 @@ const eventHandlers = {
 
   // 이벤트 리스너 등록
   registerEventListeners: () => {
-    const manualToggle = utils.getElement('manual-toggle');
-    const manualOverlay = utils.getElement('manual-overlay');
-    const addBtn = utils.getElement('add-to-cart');
-    const cartDisp = utils.getElement('cart-items');
+    const manualToggle = getElement('manual-toggle');
+    const manualOverlay = getElement('manual-overlay');
+    const addBtn = getElement('add-to-cart');
+    const cartDisp = getElement('cart-items');
 
     manualToggle.onclick = eventHandlers.handleManualToggle;
     manualOverlay.onclick = eventHandlers.handleManualOverlayClick;
@@ -485,7 +457,7 @@ const eventHandlers = {
 
     eventSystem.on(eventSystem.EVENT_TYPES.CART_ADD_ITEM, (data) => {
       const { productId, quantity, product } = data;
-      const item = utils.getElement(productId);
+      const item = getElement(productId);
 
       if (item) {
         // 기존 아이템 수량 증가
@@ -502,7 +474,7 @@ const eventHandlers = {
         }
       } else {
         // 새 아이템 추가
-        const cartContainer = utils.getElement('cart-items');
+        const cartContainer = getElement('cart-items');
         cartContainer.insertAdjacentHTML('beforeend', domainUtils.createCartItemHTML(product));
         productStore.dispatch({
           type: 'DECREASE_STOCK',
@@ -719,13 +691,13 @@ function main() {
     uiRenderer.renderCartDisplay(state.itemCnt, state.totalAmt);
 
     // 총액 변경 시 UI 업데이트
-    const totalDiv = utils.querySelector(utils.getElement('cart-total'), '.text-2xl');
+    const totalDiv = querySelector(getElement('cart-total'), '.text-2xl');
     if (totalDiv) {
-      totalDiv.textContent = utils.formatPrice(state.totalAmt);
+      totalDiv.textContent = formatPrice(state.totalAmt);
     }
 
     // 포인트 계산 및 표시
-    const loyaltyPointsDiv = utils.getElement('loyalty-points');
+    const loyaltyPointsDiv = getElement('loyalty-points');
     if (loyaltyPointsDiv) {
       const points = Math.floor(state.totalAmt / 1000);
       const pointsDisplay = points > 0 ? `적립 포인트: ${points}p` : '적립 포인트: 0p';
@@ -746,7 +718,7 @@ function main() {
     uiRenderer.renderManualOverlay(state.isManualOverlayVisible);
 
     // 화요일 할인 표시
-    const tuesdaySpecial = utils.getElement('tuesday-special');
+    const tuesdaySpecial = getElement('tuesday-special');
     if (tuesdaySpecial) {
       if (state.isTuesdaySpecialVisible) {
         tuesdaySpecial.classList.remove('hidden');
@@ -756,7 +728,7 @@ function main() {
     }
 
     // 재고 메시지 표시
-    const stockInfo = utils.getElement('stock-status');
+    const stockInfo = getElement('stock-status');
     if (stockInfo) {
       stockInfo.textContent = state.stockMessage;
     }
@@ -1007,7 +979,7 @@ const updateCartItemStyles = (cartItems) => {
 
 // 🎯 메인 계산 함수 - 이제 조율자 역할만 수행
 function handleCalculateCartStuff() {
-  const cartDisp = utils.getElement('cart-items');
+  const cartDisp = getElement('cart-items');
   const cartItems = cartDisp.children;
 
   // 1. 장바구니 아이템 계산
@@ -1033,10 +1005,10 @@ function handleCalculateCartStuff() {
 }
 
 const doRenderBonusPoints = function () {
-  const ptsTag = utils.getElement('loyalty-points');
+  const ptsTag = getElement('loyalty-points');
   if (!ptsTag) return;
 
-  const cartDisp = utils.getElement('cart-items');
+  const cartDisp = getElement('cart-items');
   if (cartDisp.children.length === 0) {
     ptsTag.style.display = 'none';
     return;
@@ -1057,7 +1029,7 @@ const doRenderBonusPoints = function () {
 
 // 💰 포인트 계산 헬퍼 함수
 const calculateBonusPoints = () => {
-  const cartDisp = utils.getElement('cart-items');
+  const cartDisp = getElement('cart-items');
   const cartItems = Array.from(cartDisp.children);
 
   if (cartItems.length === 0) {
@@ -1123,14 +1095,14 @@ const updateCartItemPrice = (cartItem, product) => {
   nameDiv.textContent = nameText;
 };
 
-// �� 포인트 관련 HTML 헬퍼 함수
+// 🎨 포인트 관련 HTML 헬퍼 함수
 const createBonusPointsHTML = (points, details) => /*html*/ `
   <div>적립 포인트: <span class="font-bold">${points}p</span></div>
   <div class="text-2xs opacity-70 mt-1">${details.join(', ')}</div>
 `;
 
 function doUpdatePricesInCart() {
-  const cartDisp = utils.getElement('cart-items');
+  const cartDisp = getElement('cart-items');
   const cartItems = Array.from(cartDisp.children);
 
   // 각 장바구니 아이템의 가격 정보 업데이트
