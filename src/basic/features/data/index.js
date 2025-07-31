@@ -1,1 +1,1 @@
-export { createInitialProductState, transformServerDataToClientState } from './dataService.js';
+export { createInitialProductState } from './dataService.js';
