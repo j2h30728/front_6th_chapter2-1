@@ -9,7 +9,7 @@ const productReducer = (state, action) => {
         ...state,
         products: state.products.map((product) =>
           product.id === action.payload.productId
-            ? { ...product, q: Math.max(0, product.q - action.payload.quantity) }
+            ? { ...product, stockQuantity: Math.max(0, product.stockQuantity - action.payload.quantity) }
             : product
         ),
       };
@@ -17,7 +17,9 @@ const productReducer = (state, action) => {
       return {
         ...state,
         products: state.products.map((product) =>
-          product.id === action.payload.productId ? { ...product, q: product.q + action.payload.quantity } : product
+          product.id === action.payload.productId
+            ? { ...product, stockQuantity: product.stockQuantity + action.payload.quantity }
+            : product
         ),
       };
     case 'SET_PRODUCT_SALE':
@@ -27,7 +29,7 @@ const productReducer = (state, action) => {
           product.id === action.payload.productId
             ? {
                 ...product,
-                val: action.payload.newPrice,
+                price: action.payload.newPrice,
                 onSale: action.payload.onSale,
                 suggestSale: action.payload.suggestSale || product.suggestSale,
               }
@@ -41,7 +43,7 @@ const productReducer = (state, action) => {
           product.id === action.payload.productId
             ? {
                 ...product,
-                val: product.originalVal,
+                price: product.originalPrice,
                 onSale: false,
                 suggestSale: false,
               }
@@ -52,14 +54,14 @@ const productReducer = (state, action) => {
       return {
         ...state,
         products: state.products.map((product) =>
-          product.id === action.payload.productId ? { ...product, val: action.payload.price } : product
+          product.id === action.payload.productId ? { ...product, price: action.payload.price } : product
         ),
       };
     case 'RESET_PRODUCT_PRICE':
       return {
         ...state,
         products: state.products.map((product) =>
-          product.id === action.payload.productId ? { ...product, val: product.originalVal } : product
+          product.id === action.payload.productId ? { ...product, price: product.originalPrice } : product
         ),
       };
     case 'SET_SALE_STATUS':

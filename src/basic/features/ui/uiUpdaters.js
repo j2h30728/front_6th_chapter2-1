@@ -68,9 +68,9 @@ export const updateSummaryDetails = (
   }
 
   const summaryItems = cartItems.map((cartItem) => {
-    const curItem = ProductUtils.findProductById(cartItem.id, productStore.getState().products);
+    const currentProduct = ProductUtils.findProductById(cartItem.id, productStore.getState().products);
     const quantity = CartUtils.getQuantityFromCartItem(cartItem);
-    return createSummaryItemHTML(curItem, quantity);
+    return createSummaryItemHTML(currentProduct, quantity);
   });
 
   const discountItems = bulkDiscount > 0 ? [createBulkDiscountHTML()] : itemDiscounts.map(createItemDiscountHTML);
@@ -117,7 +117,7 @@ export const updateDiscountInfo = (subtotal, finalTotal, uiRenderer) => {
 export const updateStockMessages = (productStore, uiRenderer, STOCK_POLICIES) => {
   const stockMessages = productStore
     .getState()
-    .products.filter((item) => item.q < STOCK_POLICIES.LOW_STOCK_THRESHOLD)
+    .products.filter((item) => item.stockQuantity < STOCK_POLICIES.LOW_STOCK_THRESHOLD)
     .map(ProductUtils.createStockMessage)
     .filter(Boolean);
 
@@ -135,19 +135,19 @@ export const updateCartItemStyles = (cartItems, uiRenderer) => {
 
 /**
  * 포인트 표시 렌더링
- * @param {HTMLElement} ptsTag - 포인트 태그 요소
+ * @param {HTMLElement} pointsElement - 포인트 태그 요소
  * @param {number} finalPoints - 최종 포인트
  * @param {Array} pointsDetail - 포인트 상세 정보
  */
-export const renderPointsDisplay = (ptsTag, finalPoints, pointsDetail) => {
-  if (!ptsTag) return;
+export const renderPointsDisplay = (pointsElement, finalPoints, pointsDetail) => {
+  if (!pointsElement) return;
 
   if (finalPoints > 0) {
-    ptsTag.innerHTML = createBonusPointsHTML(finalPoints, pointsDetail);
+    pointsElement.innerHTML = createBonusPointsHTML(finalPoints, pointsDetail);
   } else {
-    ptsTag.textContent = '적립 포인트: 0p';
+    pointsElement.textContent = '적립 포인트: 0p';
   }
-  ptsTag.style.display = UI_STYLES.VISIBLE;
+  pointsElement.style.display = UI_STYLES.VISIBLE;
 };
 
 /**

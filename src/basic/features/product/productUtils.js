@@ -33,15 +33,15 @@ export const ProductUtils = {
    */
   getPriceHTML(item) {
     if (!item.onSale && !item.suggestSale) {
-      return `₩${item.val.toLocaleString()}`;
+      return `₩${item.price.toLocaleString()}`;
     }
 
     const colorClass =
       item.onSale && item.suggestSale ? 'text-purple-600' : item.onSale ? 'text-red-500' : 'text-blue-500';
 
     return `
-      <span class="line-through text-gray-400">₩${item.originalVal.toLocaleString()}</span>
-      <span class="${colorClass}">₩${item.val.toLocaleString()}</span>
+      <span class="line-through text-gray-400">₩${item.originalPrice.toLocaleString()}</span>
+      <span class="${colorClass}">₩${item.price.toLocaleString()}</span>
     `;
   },
 
@@ -51,10 +51,10 @@ export const ProductUtils = {
    * @returns {string|null} 재고 메시지 또는 null
    */
   createStockMessage(item) {
-    if (item.q === 0) {
+    if (item.stockQuantity === 0) {
       return `${item.name}: 품절`;
-    } else if (item.q < 5) {
-      return `${item.name}: 재고 부족 (${item.q}개 남음)`;
+    } else if (item.stockQuantity < 5) {
+      return `${item.name}: 재고 부족 (${item.stockQuantity}개 남음)`;
     }
     return null; // 재고 충분한 경우
   },

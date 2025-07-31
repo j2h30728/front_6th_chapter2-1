@@ -14,49 +14,48 @@ export const optionService = {
     const sel = document.getElementById('product-select');
 
     // 전체 재고 계산
-    const totalStock = productStore.getState().products.reduce((total, product) => total + product.q, 0);
+    const totalStock = productStore.getState().products.reduce((total, product) => total + product.stockQuantity, 0);
 
     // 상품을 option HTML로 변환하는 함수
     const createOptionHTML = (item) => {
       const getItemSaleIcon = () => ProductUtils.getSaleIcon(item);
 
       const getOptionClass = () => {
-        if (item.q === 0) return 'text-gray-400';
+        if (item.stockQuantity === 0) return 'text-gray-400';
         if (item.onSale && item.suggestSale) return 'text-purple-600 font-bold';
         if (item.onSale) return 'text-red-500 font-bold';
         if (item.suggestSale) return 'text-blue-500 font-bold';
         return '';
       };
 
-      const getOptionText = () => {
+      const getOptionDisplayText = () => {
         const icon = getItemSaleIcon();
-
-        if (item.q === 0) {
-          return `${item.name} - ${item.val}원 (품절)`;
+        if (item.stockQuantity === 0) {
+          return `${item.name} - ${item.price}원 (품절)`;
         }
 
         if (item.onSale && item.suggestSale) {
-          return `${icon}${item.name} - ${item.originalVal}원 → ${item.val}원 (25% SUPER SALE!)`;
+          return `${icon}${item.name} - ${item.originalPrice}원 → ${item.price}원 (25% SUPER SALE!)`;
+        } else if (item.onSale) {
+          return `${icon}${item.name} - ${item.originalPrice}원 → ${item.price}원 (20% SALE!)`;
+        } else if (item.suggestSale) {
+          return `${icon}${item.name} - ${item.originalPrice}원 → ${item.price}원 (5% 추천할인!)`;
+        } else {
+          return `${item.name} - ${item.price}원`;
         }
+      };
 
-        if (item.onSale) {
-          return `${icon}${item.name} - ${item.originalVal}원 → ${item.val}원 (20% SALE!)`;
-        }
-
-        if (item.suggestSale) {
-          return `${icon}${item.name} - ${item.originalVal}원 → ${item.val}원 (5% 추천할인!)`;
-        }
-
-        return `${item.name} - ${item.val}원`;
+      const getOptionDisabled = () => {
+        return `${item.stockQuantity === 0 ? 'disabled' : ''}`;
       };
 
       return `
         <option
           value="${item.id}"
           class="${getOptionClass()}"
-          ${item.q === 0 ? 'disabled' : ''}
+          ${getOptionDisabled()}
         >
-          ${getOptionText()}
+          ${getOptionDisplayText()}
         </option>
       `;
     };

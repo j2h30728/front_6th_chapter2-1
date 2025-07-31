@@ -16,19 +16,19 @@ export const saleService = {
 
     setTimeout(() => {
       setInterval(function () {
-        const luckyIdx = Math.floor(Math.random() * productStore.getState().products.length);
-        const luckyItem = productStore.getState().products[luckyIdx];
+        const randomProductIndex = Math.floor(Math.random() * productStore.getState().products.length);
+        const randomProduct = productStore.getState().products[randomProductIndex];
 
-        if (luckyItem.q > 0 && !luckyItem.onSale) {
+        if (randomProduct.stockQuantity > 0 && !randomProduct.onSale) {
           const newPrice = Math.round(
-            luckyItem.originalVal * (1 - DISCOUNT_POLICIES.SPECIAL_DISCOUNTS.LIGHTNING_SALE.RATE)
+            randomProduct.originalPrice * (1 - DISCOUNT_POLICIES.SPECIAL_DISCOUNTS.LIGHTNING_SALE.RATE)
           );
 
           // 가격 변경
           productStore.dispatch({
             type: 'SET_PRODUCT_PRICE',
             payload: {
-              productId: luckyItem.id,
+              productId: randomProduct.id,
               price: newPrice,
             },
           });
@@ -37,13 +37,13 @@ export const saleService = {
           productStore.dispatch({
             type: 'SET_SALE_STATUS',
             payload: {
-              productId: luckyItem.id,
+              productId: randomProduct.id,
               onSale: true,
               suggestSale: false,
             },
           });
 
-          alert('⚡번개세일! ' + luckyItem.name + '이(가) 20% 할인 중입니다!');
+          alert('⚡번개세일! ' + randomProduct.name + '이(가) 20% 할인 중입니다!');
           onUpdateSelectOptions();
           doUpdatePricesInCart();
         }
@@ -61,29 +61,31 @@ export const saleService = {
   startRecommendedSale: (cartStore, productStore, onUpdateSelectOptions, doUpdatePricesInCart) => {
     setTimeout(function () {
       setInterval(function () {
-        if (cartStore.getState().lastSel) {
-          let suggest = null;
+        if (cartStore.getState().lastSelectedProductId) {
+          let recommendedProduct = null;
 
-          for (let k = 0; k < productStore.getState().products.length; k++) {
-            if (productStore.getState().products[k].id !== cartStore.getState().lastSel) {
-              if (productStore.getState().products[k].q > 0) {
-                if (!productStore.getState().products[k].suggestSale) {
-                  suggest = productStore.getState().products[k];
+          for (let productIndex = 0; productIndex < productStore.getState().products.length; productIndex++) {
+            if (productStore.getState().products[productIndex].id !== cartStore.getState().lastSelectedProductId) {
+              if (productStore.getState().products[productIndex].stockQuantity > 0) {
+                if (!productStore.getState().products[productIndex].suggestSale) {
+                  recommendedProduct = productStore.getState().products[productIndex];
                   break;
                 }
               }
             }
           }
 
-          if (suggest) {
-            alert('💝 ' + suggest.name + '은(는) 어떠세요? 지금 구매하시면 5% 추가 할인!');
-            const newPrice = Math.round(suggest.val * (1 - DISCOUNT_POLICIES.SPECIAL_DISCOUNTS.RECOMMENDED_SALE.RATE));
+          if (recommendedProduct) {
+            alert('💝 ' + recommendedProduct.name + '은(는) 어떠세요? 지금 구매하시면 5% 추가 할인!');
+            const newPrice = Math.round(
+              recommendedProduct.price * (1 - DISCOUNT_POLICIES.SPECIAL_DISCOUNTS.RECOMMENDED_SALE.RATE)
+            );
 
             // 가격 변경
             productStore.dispatch({
               type: 'SET_PRODUCT_PRICE',
               payload: {
-                productId: suggest.id,
+                productId: recommendedProduct.id,
                 price: newPrice,
               },
             });
@@ -92,7 +94,7 @@ export const saleService = {
             productStore.dispatch({
               type: 'SET_SALE_STATUS',
               payload: {
-                productId: suggest.id,
+                productId: recommendedProduct.id,
                 onSale: false,
                 suggestSale: true,
               },

@@ -85,11 +85,11 @@ export const discountService = {
   createDiscountInfo: (cartItems, productStore) => {
     return Array.from(cartItems)
       .map((cartItem) => {
-        const curItem = ProductUtils.findProductById(cartItem.id, productStore.getState().products);
+        const currentProduct = ProductUtils.findProductById(cartItem.id, productStore.getState().products);
         const quantity = CartUtils.getQuantityFromCartItem(cartItem);
-        const discount = discountService.calculateIndividualDiscount(curItem.id, quantity);
+        const discount = discountService.calculateIndividualDiscount(currentProduct.id, quantity);
 
-        return discount > 0 ? { name: curItem.name, discount: discount * 100 } : null;
+        return discount > 0 ? { name: currentProduct.name, discount: discount * 100 } : null;
       })
       .filter(Boolean);
   },

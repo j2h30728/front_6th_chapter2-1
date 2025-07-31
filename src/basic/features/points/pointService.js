@@ -64,7 +64,7 @@ export const pointService = {
   calculateQuantityBonus: (totalItems) => {
     const quantityThresholds = Object.keys(POINT_POLICIES.QUANTITY_BONUSES)
       .map(Number)
-      .sort((a, b) => b - a);
+      .sort((firstThreshold, secondThreshold) => secondThreshold - firstThreshold);
 
     for (const threshold of quantityThresholds) {
       if (totalItems >= threshold) {

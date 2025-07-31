@@ -18,9 +18,9 @@ const DAYS_OF_WEEK = {
 export const calculateCartItems = (cartItems, productStore) => {
   const cartData = Array.from(cartItems).reduce(
     (acc, cartItem) => {
-      const curItem = ProductUtils.findProductById(cartItem.id, productStore.getState().products);
+      const currentProduct = ProductUtils.findProductById(cartItem.id, productStore.getState().products);
       const quantity = CartUtils.getQuantityFromCartItem(cartItem);
-      const itemTotal = curItem.val * quantity;
+      const itemTotal = currentProduct.price * quantity;
 
       return {
         subtotal: acc.subtotal + itemTotal,
@@ -85,8 +85,8 @@ export const getCartState = (getElement, cartStore) => {
   const cartItems = Array.from(cartDisp.children);
   return {
     cartItems,
-    totalAmount: cartStore.getState().totalAmt,
-    totalItems: cartStore.getState().itemCnt,
+    totalAmount: cartStore.getState().totalAmount,
+    totalItems: cartStore.getState().itemCount,
   };
 };
 

@@ -16,12 +16,12 @@ const UI_STYLES = {
  * @param {Object} productStore - 상품 스토어
  */
 export const doRenderBonusPoints = (getElement, cartStore, productStore) => {
-  const ptsTag = getElement('loyalty-points');
-  if (!ptsTag) return;
+  const pointsElement = getElement('loyalty-points');
+  if (!pointsElement) return;
 
   const cartDisp = getElement('cart-items');
   if (!cartDisp || cartDisp.children.length === 0) {
-    ptsTag.style.display = UI_STYLES.HIDDEN;
+    pointsElement.style.display = UI_STYLES.HIDDEN;
     return;
   }
 
@@ -31,5 +31,5 @@ export const doRenderBonusPoints = (getElement, cartStore, productStore) => {
   const finalPoints = calculateTotalPoints(totalAmount, cartItems, totalItems, isTuesday, productStore);
   const pointsDetail = pointService.createPointsDetail(totalAmount, cartItems, totalItems, isTuesday, productStore);
 
-  renderPointsDisplay(ptsTag, finalPoints, pointsDetail);
+  renderPointsDisplay(pointsElement, finalPoints, pointsDetail);
 };

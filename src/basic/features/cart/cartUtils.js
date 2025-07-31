@@ -13,8 +13,8 @@ export const CartUtils = {
    * @returns {number} 수량
    */
   getQuantityFromCartItem(cartItem) {
-    const qtyElem = cartItem.querySelector('.cart-item-content .quantity-number');
-    return qtyElem ? parseInt(qtyElem.textContent) || 0 : 0;
+    const quantityElement = cartItem.querySelector('.cart-item-content .quantity-number');
+    return quantityElement ? parseInt(quantityElement.textContent) || 0 : 0;
   },
 
   /**
@@ -23,9 +23,9 @@ export const CartUtils = {
    * @param {number} quantity - 설정할 수량
    */
   setQuantityToCartItem(cartItem, quantity) {
-    const qtyElem = cartItem.querySelector('.cart-item-content .quantity-number');
-    if (qtyElem) {
-      qtyElem.textContent = quantity;
+    const quantityElement = cartItem.querySelector('.cart-item-content .quantity-number');
+    if (quantityElement) {
+      quantityElement.textContent = quantity;
     }
   },
 

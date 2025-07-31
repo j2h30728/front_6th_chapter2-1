@@ -6,23 +6,23 @@ import createStore from '../../utils/createStore.js';
 const cartReducer = (state, action) => {
   switch (action.type) {
     case 'SET_ITEM_COUNT':
-      return { ...state, itemCnt: action.payload };
+      return { ...state, itemCount: action.payload };
     case 'RESET_ITEM_COUNT':
-      return { ...state, itemCnt: UI_CONSTANTS.DEFAULT_ITEM_COUNT };
+      return { ...state, itemCount: UI_CONSTANTS.DEFAULT_ITEM_COUNT };
     case 'ADD_TO_ITEM_COUNT':
-      return { ...state, itemCnt: state.itemCnt + action.payload };
+      return { ...state, itemCount: state.itemCount + action.payload };
     case 'SET_TOTAL_AMOUNT':
-      return { ...state, totalAmt: action.payload };
+      return { ...state, totalAmount: action.payload };
     case 'ADD_TO_TOTAL_AMOUNT':
-      return { ...state, totalAmt: state.totalAmt + action.payload };
-    case 'SET_LAST_SELECTED':
-      return { ...state, lastSel: action.payload };
+      return { ...state, totalAmount: state.totalAmount + action.payload };
+    case 'SET_LAST_SELECTED_PRODUCT_ID':
+      return { ...state, lastSelectedProductId: action.payload };
     case 'RESET_CART':
       return {
         ...state,
-        itemCnt: UI_CONSTANTS.DEFAULT_ITEM_COUNT,
-        totalAmt: UI_CONSTANTS.DEFAULT_TOTAL_AMOUNT,
-        lastSel: null,
+        itemCount: UI_CONSTANTS.DEFAULT_ITEM_COUNT,
+        totalAmount: UI_CONSTANTS.DEFAULT_TOTAL_AMOUNT,
+        lastSelectedProductId: null,
       };
     default:
       return state;
@@ -31,9 +31,9 @@ const cartReducer = (state, action) => {
 
 // 🛒 장바구니 Store 인스턴스
 const cartStore = createStore(cartReducer, {
-  itemCnt: UI_CONSTANTS.DEFAULT_ITEM_COUNT,
-  totalAmt: UI_CONSTANTS.DEFAULT_TOTAL_AMOUNT,
-  lastSel: null,
+  itemCount: UI_CONSTANTS.DEFAULT_ITEM_COUNT,
+  totalAmount: UI_CONSTANTS.DEFAULT_TOTAL_AMOUNT,
+  lastSelectedProductId: null,
 });
 
 export default cartStore;

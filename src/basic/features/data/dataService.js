@@ -2,17 +2,17 @@
 import { PRODUCT_DATA, PRODUCT_IDS } from '../../constants/index.js';
 
 /**
- * 서버 데이터를 클라이언트 상태로 변환
- * @param {Object} serverData - 서버에서 받은 데이터
- * @returns {Array} 클라이언트 상태 배열
+ * 데이터를 상태로 변환
+ * @param {Object} data -  데이터
+ * @returns {Array}  상태 배열
  */
-export const transformServerDataToClientState = (serverData) => {
-  return Object.entries(serverData).map(([key, data]) => ({
+export const transformDataToState = (data) => {
+  return Object.entries(data).map(([key, value]) => ({
     id: PRODUCT_IDS[key],
-    name: data.name,
-    val: data.price,
-    originalVal: data.price,
-    q: data.stock,
+    name: value.name,
+    price: value.price,
+    originalPrice: value.price,
+    stockQuantity: value.stock,
     onSale: false,
     suggestSale: false,
   }));
@@ -23,5 +23,5 @@ export const transformServerDataToClientState = (serverData) => {
  * @returns {Array} 초기 상품 상태 배열
  */
 export const createInitialProductState = () => {
-  return transformServerDataToClientState(PRODUCT_DATA);
+  return transformDataToState(PRODUCT_DATA);
 };

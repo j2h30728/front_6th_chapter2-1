@@ -9,18 +9,18 @@ import { ProductUtils } from './productUtils.js';
 export const updateCartItemPrice = (cartItem, product) => {
   if (!cartItem || !product) return;
 
-  const priceDiv = cartItem.querySelector('.cart-item-price');
-  const nameDiv = cartItem.querySelector('.cart-item-name');
+  const priceElement = cartItem.querySelector('.cart-item-price');
+  const nameElement = cartItem.querySelector('.cart-item-name');
 
   const priceHTML = ProductUtils.getPriceHTML(product);
   const icon = ProductUtils.getSaleIcon(product);
   const nameText = `${icon}${product.name}`;
 
-  if (priceDiv) {
-    priceDiv.innerHTML = priceHTML;
+  if (priceElement) {
+    priceElement.innerHTML = priceHTML;
   }
-  if (nameDiv) {
-    nameDiv.textContent = nameText;
+  if (nameElement) {
+    nameElement.textContent = nameText;
   }
 };
 
