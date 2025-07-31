@@ -8,11 +8,6 @@ import globals from 'globals'; // 브라우저/Node.js 전역변수 정의 (wind
 import tseslint from 'typescript-eslint'; // TypeScript 코드 검사 및 타입 관련 규칙
 
 export default defineConfig([
-  // 파일 제외 설정
-  {
-    ignores: ['src/main.original.js'], // ESLint 검사에서 제외할 파일
-  },
-
   // 기본 파일 타입 및 언어 설정
   {
     files: ['**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'], // 검사할 파일 확장자 지정
@@ -53,7 +48,8 @@ export default defineConfig([
       'no-console': 'warn', // console.log 사용 경고 (운영환경 배포시 제거 필요)
       'no-var': 'error', // var 사용 금지 (let/const 사용 강제)
       'prefer-const': 'error', // 재할당 없는 변수는 const 사용 강제
-      'no-shadow': 'error', // 변수명 중복(섀도잉) 방지 (버그 예방)
+      'react/react-in-jsx-scope': 'off', // React 17 이상에서는 필요 없음
+      'react/jsx-uses-react': 'off', // React 17 이상에서는 필요 없음
 
       // === 코드 스타일 통일 ===
       eqeqeq: ['error', 'always'], // === 연산자 사용 강제 (타입 안전성)
