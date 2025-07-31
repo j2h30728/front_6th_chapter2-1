@@ -194,6 +194,94 @@ const utils = {
   whenValue: (condition, trueValue, falseValue) => (condition ? trueValue : falseValue),
 };
 
+// 🏪 UI 렌더링 모듈 (React 스타일)
+const uiRenderer = {
+  // 상태 기반 UI 업데이트
+  renderCartDisplay: (totalItems, finalTotal) => {
+    utils.setTextContent('item-count', `🛍️ ${totalItems} items in cart`);
+
+    const totalDiv = utils.querySelector(utils.getElement('cart-total'), '.text-2xl');
+    if (totalDiv) {
+      totalDiv.textContent = utils.formatPrice(finalTotal);
+    }
+  },
+
+  renderPointsDisplay: (totalPoints) => {
+    const pointsDisplay = utils.whenValue(totalPoints > 0, `적립 포인트: ${totalPoints}p`, '적립 포인트: 0p');
+    utils.setTextContent('loyalty-points', pointsDisplay);
+    utils.setStyle('loyalty-points', 'display', 'block');
+  },
+
+  renderTuesdaySpecial: (isTuesday, finalTotal) => {
+    const tuesdaySpecial = utils.getElement('tuesday-special');
+    if (tuesdaySpecial) {
+      if (isTuesday && finalTotal > 0) {
+        tuesdaySpecial.classList.remove('hidden');
+      } else {
+        tuesdaySpecial.classList.add('hidden');
+      }
+    }
+  },
+
+  renderStockMessages: (stockMessages) => {
+    const stockMsg = stockMessages.join('\n');
+    utils.setTextContent('stock-status', stockMsg);
+  },
+
+  renderSummaryDetails: (summaryItems) => {
+    utils.setInnerHTML('summary-details', summaryItems.join(''));
+  },
+
+  renderDiscountInfo: (totalDiscountRate, savedAmount) => {
+    const discountInfoDiv = utils.getElement('discount-info');
+    if (totalDiscountRate > 0 && savedAmount > 0) {
+      discountInfoDiv.innerHTML = /*html*/ `
+        <div class="bg-green-500/20 rounded-lg p-3">
+          <div class="flex justify-between items-center mb-1">
+            <span class="text-xs uppercase tracking-wide text-green-400">총 할인율</span>
+            <span class="text-sm font-medium text-green-400">${(totalDiscountRate * 100).toFixed(1)}%</span>
+          </div>
+          <div class="text-2xs text-gray-300">₩${utils.formatNumber(savedAmount)} 할인되었습니다</div>
+        </div>
+      `;
+    } else {
+      discountInfoDiv.innerHTML = '';
+    }
+  },
+
+  renderCartItemStyles: (cartItems) => {
+    Array.from(cartItems).forEach((cartItem) => {
+      const quantity = utils.getQuantityFromCartItem(cartItem);
+      const priceElems = cartItem.querySelectorAll('.text-lg, .text-xs');
+
+      priceElems.forEach((elem) => {
+        if (elem.classList.contains('text-lg')) {
+          elem.style.fontWeight = utils.whenValue(
+            quantity >= UI_CONSTANTS.QUANTITY_THRESHOLD_FOR_BOLD,
+            'bold',
+            'normal'
+          );
+        }
+      });
+    });
+  },
+
+  renderManualOverlay: (isVisible) => {
+    const manualOverlay = utils.getElement('manual-overlay');
+    const manualColumn = utils.getElement('manual-column');
+
+    utils.when(isVisible, () => {
+      manualOverlay.classList.remove('hidden');
+      manualColumn.classList.remove('translate-x-full');
+    });
+
+    utils.when(!isVisible, () => {
+      manualOverlay.classList.add('hidden');
+      manualColumn.classList.add('translate-x-full');
+    });
+  },
+};
+
 // 🏪 데이터 변환 함수들
 const transformServerDataToClientState = (serverData) => {
   return Object.entries(serverData).map(([key, data]) => ({
@@ -382,28 +470,14 @@ const eventHandlers = {
   handleManualToggle: () => {
     uiStore.dispatch({ type: 'TOGGLE_MANUAL_OVERLAY' });
     const isVisible = uiStore.getState().isManualOverlayVisible;
-    const manualOverlay = utils.getElement('manual-overlay');
-    const manualColumn = utils.getElement('manual-column');
-
-    utils.when(isVisible, () => {
-      manualOverlay.classList.remove('hidden');
-      manualColumn.classList.remove('translate-x-full');
-    });
-
-    utils.when(!isVisible, () => {
-      manualOverlay.classList.add('hidden');
-      manualColumn.classList.add('translate-x-full');
-    });
+    uiRenderer.renderManualOverlay(isVisible);
   },
 
   // 매뉴얼 오버레이 배경 클릭 이벤트 핸들러
   handleManualOverlayClick: (event) => {
     if (event.target === event.currentTarget) {
       uiStore.dispatch({ type: 'SET_MANUAL_OVERLAY_VISIBLE', payload: false });
-      const manualOverlay = utils.getElement('manual-overlay');
-      const manualColumn = utils.getElement('manual-column');
-      manualOverlay.classList.add('hidden');
-      manualColumn.classList.add('translate-x-full');
+      uiRenderer.renderManualOverlay(false);
     }
   },
 
@@ -839,19 +913,16 @@ function main() {
   // 🔍 Observers 활성화 - DOM 준비 후
   const cartObserver = createObserver(cartStore, (state) => {
     // 장바구니 상태 변경 시 UI 업데이트
-    const itemCountElement = document.getElementById('item-count');
-    if (itemCountElement) {
-      itemCountElement.textContent = '🛍️ ' + state.itemCnt + ' items in cart';
-    }
+    uiRenderer.renderCartDisplay(state.itemCnt, state.totalAmt);
 
     // 총액 변경 시 UI 업데이트
-    const totalDiv = document.getElementById('cart-total')?.querySelector('.text-2xl');
+    const totalDiv = utils.querySelector(utils.getElement('cart-total'), '.text-2xl');
     if (totalDiv) {
-      totalDiv.textContent = '₩' + Math.round(state.totalAmt).toLocaleString();
+      totalDiv.textContent = utils.formatPrice(state.totalAmt);
     }
 
     // 포인트 계산 및 표시
-    const loyaltyPointsDiv = document.getElementById('loyalty-points');
+    const loyaltyPointsDiv = utils.getElement('loyalty-points');
     if (loyaltyPointsDiv) {
       const points = Math.floor(state.totalAmt / 1000);
       const pointsDisplay = points > 0 ? `적립 포인트: ${points}p` : '적립 포인트: 0p';
@@ -869,21 +940,10 @@ function main() {
 
   const uiObserver = createObserver(uiStore, (state) => {
     // UI 상태 변경 시 DOM 업데이트
-    const overlayElement = document.getElementById('manual-overlay');
-    const columnElement = document.getElementById('manual-column');
-
-    if (overlayElement && columnElement) {
-      if (state.isManualOverlayVisible) {
-        overlayElement.classList.remove('hidden');
-        columnElement.classList.remove('translate-x-full');
-      } else {
-        overlayElement.classList.add('hidden');
-        columnElement.classList.add('translate-x-full');
-      }
-    }
+    uiRenderer.renderManualOverlay(state.isManualOverlayVisible);
 
     // 화요일 할인 표시
-    const tuesdaySpecial = document.getElementById('tuesday-special');
+    const tuesdaySpecial = utils.getElement('tuesday-special');
     if (tuesdaySpecial) {
       if (state.isTuesdaySpecialVisible) {
         tuesdaySpecial.classList.remove('hidden');
@@ -893,7 +953,7 @@ function main() {
     }
 
     // 재고 메시지 표시
-    const stockInfo = document.getElementById('stock-status');
+    const stockInfo = utils.getElement('stock-status');
     if (stockInfo) {
       stockInfo.textContent = state.stockMessage;
     }
@@ -1134,30 +1194,17 @@ const updateCartDisplay = (totalItems, finalTotal) => {
   cartStore.dispatch({ type: 'SET_TOTAL_AMOUNT', payload: finalTotal });
   cartStore.dispatch({ type: 'SET_ITEM_COUNT', payload: totalItems });
 
-  utils.setTextContent('item-count', `🛍️ ${totalItems} items in cart`);
-
-  const totalDiv = utils.querySelector(utils.getElement('cart-total'), '.text-2xl');
-  if (totalDiv) {
-    totalDiv.textContent = utils.formatPrice(finalTotal);
-  }
+  uiRenderer.renderCartDisplay(totalItems, finalTotal);
 };
 
 const updateTuesdaySpecialDisplay = (isTuesday, finalTotal) => {
-  const tuesdaySpecial = document.getElementById('tuesday-special');
-  if (tuesdaySpecial) {
-    if (isTuesday && finalTotal > 0) {
-      uiStore.dispatch({ type: 'TOGGLE_TUESDAY_SPECIAL', payload: true });
-      tuesdaySpecial.classList.remove('hidden');
-    } else {
-      uiStore.dispatch({ type: 'TOGGLE_TUESDAY_SPECIAL', payload: false });
-      tuesdaySpecial.classList.add('hidden');
-    }
-  }
+  uiStore.dispatch({ type: 'TOGGLE_TUESDAY_SPECIAL', payload: isTuesday && finalTotal > 0 });
+  uiRenderer.renderTuesdaySpecial(isTuesday, finalTotal);
 };
 
 const updateSummaryDetails = (cartItems, subtotal, itemDiscounts, bulkDiscount, isTuesday, finalTotal) => {
   if (subtotal <= 0) {
-    utils.setInnerHTML('summary-details', '');
+    uiRenderer.renderSummaryDetails([]);
     return;
   }
 
@@ -1179,72 +1226,36 @@ const updateSummaryDetails = (cartItems, subtotal, itemDiscounts, bulkDiscount, 
     createShippingHTML(),
   ];
 
-  utils.setInnerHTML('summary-details', allItems.join(''));
+  uiRenderer.renderSummaryDetails(allItems);
 };
 
 const updatePointsDisplay = (totalPoints) => {
-  const pointsDisplay = utils.whenValue(totalPoints > 0, `적립 포인트: ${totalPoints}p`, '적립 포인트: 0p');
-  uiStore.dispatch({ type: 'SET_POINTS_DISPLAY', payload: pointsDisplay });
-  utils.setTextContent('loyalty-points', pointsDisplay);
-  utils.setStyle('loyalty-points', 'display', 'block');
+  uiRenderer.renderPointsDisplay(totalPoints);
 };
 
 const updateDiscountInfo = (subtotal, finalTotal) => {
-  const discountInfoDiv = document.getElementById('discount-info');
-  discountInfoDiv.innerHTML = '';
-
   const totalDiscountRate = (subtotal - finalTotal) / subtotal;
-  if (totalDiscountRate > 0 && finalTotal > 0) {
-    const savedAmount = subtotal - finalTotal;
-    uiStore.dispatch({ type: 'SET_DISCOUNT_INFO_VISIBLE', payload: true });
-    discountInfoDiv.innerHTML = /*html*/ `
-      <div class="bg-green-500/20 rounded-lg p-3">
-        <div class="flex justify-between items-center mb-1">
-          <span class="text-xs uppercase tracking-wide text-green-400">총 할인율</span>
-          <span class="text-sm font-medium text-green-400">${(totalDiscountRate * 100).toFixed(1)}%</span>
-        </div>
-        <div class="text-2xs text-gray-300">₩${Math.round(savedAmount).toLocaleString()} 할인되었습니다</div>
-      </div>
-    `;
-  } else {
-    uiStore.dispatch({ type: 'SET_DISCOUNT_INFO_VISIBLE', payload: false });
-  }
+  const savedAmount = subtotal - finalTotal;
+  uiRenderer.renderDiscountInfo(totalDiscountRate, savedAmount);
 };
 
 const updateStockMessages = () => {
   const stockMessages = productStore
     .getState()
     .products.filter((item) => item.q < STOCK_POLICIES.LOW_STOCK_THRESHOLD)
-    .map((item) => {
-      if (item.q > STOCK_POLICIES.OUT_OF_STOCK) {
-        return `${item.name}: 재고 부족 (${item.q}개 남음)`;
-      } else {
-        return `${item.name}: 품절`;
-      }
-    });
+    .map(createStockMessage)
+    .filter(Boolean);
 
-  const stockMsg = stockMessages.join('\n');
-  uiStore.dispatch({ type: 'SET_STOCK_MESSAGE', payload: stockMsg });
-  utils.setTextContent('stock-status', stockMsg);
-  handleStockInfoUpdate();
+  uiRenderer.renderStockMessages(stockMessages);
 };
 
 const updateCartItemStyles = (cartItems) => {
-  Array.from(cartItems).forEach((cartItem) => {
-    const quantity = utils.getQuantityFromCartItem(cartItem);
-    const priceElems = cartItem.querySelectorAll('.text-lg, .text-xs');
-
-    priceElems.forEach((elem) => {
-      if (elem.classList.contains('text-lg')) {
-        elem.style.fontWeight = utils.whenValue(quantity >= UI_CONSTANTS.QUANTITY_THRESHOLD_FOR_BOLD, 'bold', 'normal');
-      }
-    });
-  });
+  uiRenderer.renderCartItemStyles(cartItems);
 };
 
 // 🎯 메인 계산 함수 - 이제 조율자 역할만 수행
 function handleCalculateCartStuff() {
-  const cartDisp = document.getElementById('cart-items');
+  const cartDisp = utils.getElement('cart-items');
   const cartItems = cartDisp.children;
 
   // 1. 장바구니 아이템 계산
@@ -1270,10 +1281,10 @@ function handleCalculateCartStuff() {
 }
 
 const doRenderBonusPoints = function () {
-  const ptsTag = document.getElementById('loyalty-points');
+  const ptsTag = utils.getElement('loyalty-points');
   if (!ptsTag) return;
 
-  const cartDisp = document.getElementById('cart-items');
+  const cartDisp = utils.getElement('cart-items');
   if (cartDisp.children.length === 0) {
     ptsTag.style.display = 'none';
     return;
@@ -1290,21 +1301,11 @@ const doRenderBonusPoints = function () {
   }
 };
 
-const handleStockInfoUpdate = function () {
-  // 재고 부족/품절 상품들을 필터링하고 메시지 생성
-  const stockMessages = productStore
-    .getState()
-    .products.filter((item) => item.q < STOCK_POLICIES.LOW_STOCK_THRESHOLD)
-    .map(createStockMessage)
-    .filter(Boolean);
-
-  const stockInfo = document.getElementById('stock-status');
-  stockInfo.textContent = stockMessages.join('\n');
-};
+// 재고 메시지 생성 헬퍼 함수 (이미 위에 정의됨)
 
 // 💰 포인트 계산 헬퍼 함수
 const calculateBonusPoints = () => {
-  const cartDisp = document.getElementById('cart-items');
+  const cartDisp = utils.getElement('cart-items');
   const cartItems = Array.from(cartDisp.children);
 
   if (cartItems.length === 0) {
