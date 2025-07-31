@@ -1,0 +1,2 @@
+# Prettier에서 제외할 파일들
+src/main.original.js 
