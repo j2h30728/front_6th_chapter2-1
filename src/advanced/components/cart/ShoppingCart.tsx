@@ -1,24 +1,23 @@
 import { useCart } from '../../hooks';
 import { type Product } from '../../lib/products';
-import { getProductDisplayName, getProductPriceClass } from '../../lib/uiUtils';
+import { getProductDisplayName, getProductPriceDisplay } from '../../lib/uiUtils';
 import ProductPicker from './ProductPicker';
 
 const ShoppingCart = () => {
   const { cartItems, products, errorMsg, handleQuantityChange, handleRemoveItem } = useCart();
 
-  const getProductPriceDisplay = (product: Product) => {
-    const { price, discountPrice, onSale, suggestSale } = product;
-    const priceClass = getProductPriceClass(product);
+  const renderProductPrice = (product: Product) => {
+    const priceInfo = getProductPriceDisplay(product);
 
-    if (onSale || suggestSale) {
+    if (priceInfo.discountPrice) {
       return (
         <>
-          <span className="line-through text-gray-400">₩{price.toLocaleString()}</span>{' '}
-          <span className={priceClass}>₩{discountPrice.toLocaleString()}</span>
+          <span className="line-through text-gray-400">₩{priceInfo.originalPrice}</span>{' '}
+          <span className={priceInfo.priceClass}>₩{priceInfo.discountPrice}</span>
         </>
       );
     }
-    return <span>₩{price.toLocaleString()}</span>;
+    return <span>₩{priceInfo.originalPrice}</span>;
   };
 
   return (
@@ -49,7 +48,7 @@ const ShoppingCart = () => {
                 <div>
                   <h3 className="text-base font-normal mb-1 tracking-tight">{getProductDisplayName(product)}</h3>
                   <p className="text-xs text-gray-500 mb-0.5 tracking-wide">PRODUCT</p>
-                  <p className="text-xs text-black mb-3">{getProductPriceDisplay(product)}</p>
+                  <p className="text-xs text-black mb-3">{renderProductPrice(product)}</p>
                   <div className="flex items-center gap-4">
                     <button
                       data-testid="decrease-qty-btn"

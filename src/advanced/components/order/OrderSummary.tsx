@@ -1,15 +1,9 @@
 import { useOrderCalculation } from '../../hooks';
 
 const OrderSummary = () => {
-  const { cartItemsWithDetails, discountResult, points, pointsDetail, totalDiscountRate } = useOrderCalculation();
+  const { cartItemsWithDetails, discountResult, points, pointsDetail, totalDiscountRate, displaySubtotal } =
+    useOrderCalculation();
   const { finalTotal, discounts, isTuesday } = discountResult;
-
-  // 서브토탈 계산 (UI 표시용)
-  const subtotal = cartItemsWithDetails.reduce((total, item) => {
-    const { onSale, discountPrice, price, quantity } = item;
-    const finalPrice = onSale ? discountPrice : price;
-    return total + (finalPrice || 0) * (quantity || 0);
-  }, 0);
 
   return (
     <div className="bg-black text-white p-8 flex flex-col">
@@ -32,7 +26,7 @@ const OrderSummary = () => {
               <div className="border-t border-white/10 my-3"></div>
               <div className="flex justify-between text-sm tracking-wide">
                 <span>Subtotal</span>
-                <span>₩{subtotal.toLocaleString()}</span>
+                <span>₩{displaySubtotal.toLocaleString()}</span>
               </div>
 
               {discounts.map((discount, index) => (

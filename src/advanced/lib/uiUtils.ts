@@ -75,3 +75,23 @@ export const getStockStatus = (products: Product[]): { totalStock: number; isLow
 
   return { totalStock, isLowStock };
 };
+
+// 상품 가격 표시 컴포넌트 생성
+export const getProductPriceDisplay = (product: Product) => {
+  const { price, discountPrice, onSale, suggestSale } = product;
+  const priceClass = getProductPriceClass(product);
+
+  if (onSale || suggestSale) {
+    return {
+      originalPrice: price.toLocaleString(),
+      discountPrice: discountPrice.toLocaleString(),
+      priceClass,
+    };
+  }
+
+  return {
+    originalPrice: price.toLocaleString(),
+    discountPrice: null,
+    priceClass: '',
+  };
+};

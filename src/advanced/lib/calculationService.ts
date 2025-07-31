@@ -50,6 +50,15 @@ export const calculateSubtotal = (cartItemsWithDetails: CartItemWithDetails[]): 
   }, 0);
 };
 
+// UI 표시용 서브토탈 계산 (할인 적용 전)
+export const calculateDisplaySubtotal = (cartItemsWithDetails: CartItemWithDetails[]): number => {
+  return cartItemsWithDetails.reduce((total, item) => {
+    const { onSale, discountPrice, price, quantity } = item;
+    const finalPrice = onSale ? discountPrice : price;
+    return total + (finalPrice || 0) * (quantity || 0);
+  }, 0);
+};
+
 // 개별 상품 할인 계산
 export const calculateIndividualDiscounts = (cartItemsWithDetails: CartItemWithDetails[]): IndividualDiscount[] => {
   return cartItemsWithDetails

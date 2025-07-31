@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import {
   calculateDiscounts,
+  calculateDisplaySubtotal,
   calculatePoints,
   calculateTotalDiscountRate,
   createPointsDetail,
@@ -33,11 +34,16 @@ export const useOrderCalculation = () => {
     return calculateTotalDiscountRate(cart.items, product.products);
   }, [cart.items, product.products]);
 
+  const displaySubtotal = useMemo(() => {
+    return calculateDisplaySubtotal(cartItemsWithDetails);
+  }, [cartItemsWithDetails]);
+
   return {
     cartItemsWithDetails,
     discountResult,
     points,
     pointsDetail,
     totalDiscountRate,
+    displaySubtotal,
   };
 };

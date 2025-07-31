@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 
+import { useCart } from '../../hooks';
 import { saleService } from '../../lib/saleService';
 import { useApp } from '../../lib/store';
 import { getOptionClass, getProductDisplayText, getStockStatus } from '../../lib/uiUtils';
 
 const ProductPicker = () => {
   const { state, dispatch } = useApp();
+  const { handleAddToCart: addToCart } = useCart();
   const [selectedProductId, setSelectedProductId] = useState(state.product.products[0]?.id || '');
 
   // 세일 서비스 시작
@@ -14,30 +16,7 @@ const ProductPicker = () => {
   }, [dispatch, state.product.products, state.cart.lastSelectedProductId]);
 
   const handleAddToCart = () => {
-    if (!selectedProductId) return;
-
-    const selectedProduct = state.product.products.find((p) => p.id === selectedProductId);
-    if (!selectedProduct) return;
-
-    if (selectedProduct.quantity === 0) {
-      alert('재고가 부족합니다.');
-      return;
-    }
-
-    const existingCartItem = state.cart.items.find((item) => item.id === selectedProductId);
-    if (existingCartItem) {
-      // 이미 장바구니에 있으면 수량 증가
-      dispatch({
-        type: 'UPDATE_CART_ITEM',
-        payload: { productId: selectedProductId, quantity: existingCartItem.quantity + 1 },
-      });
-    } else {
-      // 새로 추가
-      dispatch({ type: 'ADD_TO_CART', payload: selectedProductId });
-    }
-
-    dispatch({ type: 'DECREASE_STOCK', payload: { productId: selectedProductId, quantity: 1 } });
-    dispatch({ type: 'SET_LAST_SELECTED_PRODUCT_ID', payload: selectedProductId });
+    addToCart(selectedProductId);
   };
 
   // 총 재고 계산
