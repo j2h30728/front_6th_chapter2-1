@@ -649,6 +649,108 @@ const calculateItemDiscounts = (cartItems) => {
   return itemDiscounts;
 };
 
+// 할인 계산 함수들
+const calculateItemDiscount = (productId, quantity) => {
+  if (quantity < 10) return 0;
+
+  const discountRates = {
+    [PRODUCT_ONE]: 0.1,
+    [p2]: 0.15,
+    [product_3]: 0.2,
+    [p4]: 0.05,
+    [PRODUCT_5]: 0.25,
+  };
+
+  return discountRates[productId] || 0;
+};
+
+const calculateBulkDiscount = (totalItems) => {
+  return totalItems >= 30 ? 0.25 : 0;
+};
+
+const calculateTuesdayDiscount = (isTuesday, currentTotal) => {
+  return isTuesday && currentTotal > 0 ? 0.1 : 0;
+};
+
+const calculateTotalDiscount = (subtotal, itemDiscounts, bulkDiscount, tuesdayDiscount) => {
+  let finalTotal = subtotal;
+
+  // 개별 상품 할인 적용
+  if (bulkDiscount === 0) {
+    itemDiscounts.forEach((discount) => {
+      finalTotal -= (subtotal * discount.discount) / 100;
+    });
+  }
+
+  // 대량 할인 적용
+  if (bulkDiscount > 0) {
+    finalTotal = subtotal * (1 - bulkDiscount);
+  }
+
+  // 화요일 할인 적용
+  if (tuesdayDiscount > 0) {
+    finalTotal = finalTotal * (1 - tuesdayDiscount);
+  }
+
+  return finalTotal;
+};
+
+// 포인트 계산 함수들
+const calculateBasePoints = (totalAmount) => {
+  return Math.floor(totalAmount / 1000);
+};
+
+const calculateTuesdayBonus = (basePoints, isTuesday) => {
+  return isTuesday ? basePoints * 2 : basePoints;
+};
+
+const calculateSetBonus = (cartItems) => {
+  const productTypes = {
+    hasKeyboard: false,
+    hasMouse: false,
+    hasMonitorArm: false,
+  };
+
+  cartItems.forEach((cartItem) => {
+    const product = productStore.getState().products.find((item) => item.id === cartItem.id);
+    if (!product) return;
+
+    if (product.id === PRODUCT_ONE) productTypes.hasKeyboard = true;
+    else if (product.id === p2) productTypes.hasMouse = true;
+    else if (product.id === product_3) productTypes.hasMonitorArm = true;
+  });
+
+  let bonus = 0;
+
+  // 키보드 + 마우스 세트 보너스
+  if (productTypes.hasKeyboard && productTypes.hasMouse) {
+    bonus += 50;
+  }
+
+  // 풀세트 보너스
+  if (productTypes.hasKeyboard && productTypes.hasMouse && productTypes.hasMonitorArm) {
+    bonus += 100;
+  }
+
+  return bonus;
+};
+
+const calculateQuantityBonus = (totalItems) => {
+  if (totalItems >= 30) return 100;
+  if (totalItems >= 20) return 50;
+  if (totalItems >= 10) return 20;
+  return 0;
+};
+
+const calculateTotalPoints = (totalAmount, cartItems, totalItems, isTuesday) => {
+  const basePoints = calculateBasePoints(totalAmount);
+  const tuesdayPoints = calculateTuesdayBonus(basePoints, isTuesday);
+  const setBonus = calculateSetBonus(cartItems);
+  const quantityBonus = calculateQuantityBonus(totalItems);
+
+  return tuesdayPoints + setBonus + quantityBonus;
+};
+
 // 📦 재고 상태 헬퍼 함수
 const createStockMessage = (item) => {
   if (item.q === 0) {
@@ -734,40 +836,24 @@ function handleCalculateCartStuff() {
       }
     });
 
-    // 할인율 적용 (이미 계산된 할인 정보에서 찾기)
-    if (quantity >= 10) {
-      const discountRates = {
-        [PRODUCT_ONE]: 0.1,
-        [p2]: 0.15,
-        [product_3]: 0.2,
-        [p4]: 0.05,
-        [PRODUCT_5]: 0.25,
-      };
-
-      discount = discountRates[curItem.id] || 0;
-    }
-
+    // 할인율 적용 (새로운 계산 함수 사용)
+    discount = calculateItemDiscount(curItem.id, quantity);
     cartStore.dispatch({ type: 'ADD_TO_TOTAL_AMOUNT', payload: itemTotal * (1 - discount) });
   }
 
-  let discRate = 0;
-  const originalTotal = subTot;
-
-  if (cartStore.getState().itemCnt >= 30) {
-    cartStore.dispatch({ type: 'SET_TOTAL_AMOUNT', payload: (subTot * 75) / 100 });
-    discRate = 25 / 100;
-  } else {
-    discRate = (subTot - cartStore.getState().totalAmt) / subTot;
-  }
-
-  // 화요일 추가 할인 적용
+  // 할인 계산 (새로운 함수들 사용)
+  const bulkDiscount = calculateBulkDiscount(cartStore.getState().itemCnt);
   const today = new Date();
   const isTuesday = today.getDay() === 2;
-  const tuesdaySpecial = document.getElementById('tuesday-special');
+  const tuesdayDiscount = calculateTuesdayDiscount(isTuesday, cartStore.getState().totalAmt);
 
-  if (isTuesday && cartStore.getState().totalAmt > 0) {
-    cartStore.dispatch({ type: 'SET_TOTAL_AMOUNT', payload: (cartStore.getState().totalAmt * 90) / 100 });
-    discRate = 1 - cartStore.getState().totalAmt / originalTotal;
+  // 최종 총액 계산
+  const finalTotal = calculateTotalDiscount(subTot, itemDiscounts, bulkDiscount, tuesdayDiscount);
+  cartStore.dispatch({ type: 'SET_TOTAL_AMOUNT', payload: finalTotal });
+
+  // 화요일 할인 표시
+  const tuesdaySpecial = document.getElementById('tuesday-special');
+  if (isTuesday && finalTotal > 0) {
     uiStore.dispatch({ type: 'TOGGLE_TUESDAY_SPECIAL', payload: true });
     tuesdaySpecial.classList.remove('hidden');
   } else {
@@ -797,7 +883,7 @@ function handleCalculateCartStuff() {
       });
     }
     if (isTuesday) {
-      if (cartStore.getState().totalAmt > 0) {
+      if (finalTotal > 0) {
         summaryDetails.innerHTML += createTuesdayDiscountHTML();
       }
     }
@@ -806,36 +892,31 @@ function handleCalculateCartStuff() {
 
   const totalDiv = document.getElementById('cart-total').querySelector('.text-2xl');
   if (totalDiv) {
-    totalDiv.textContent = '₩' + Math.round(cartStore.getState().totalAmt).toLocaleString();
+    totalDiv.textContent = '₩' + Math.round(finalTotal).toLocaleString();
   }
 
+  // 포인트 계산 (새로운 함수 사용)
+  const totalPoints = calculateTotalPoints(finalTotal, Array.from(cartItems), cartStore.getState().itemCnt, isTuesday);
   const loyaltyPointsDiv = document.getElementById('loyalty-points');
   if (loyaltyPointsDiv) {
-    const points = Math.floor(cartStore.getState().totalAmt / 1000);
-    if (points > 0) {
-      const pointsDisplay = '적립 포인트: ' + points + 'p';
-      uiStore.dispatch({ type: 'SET_POINTS_DISPLAY', payload: pointsDisplay });
-      loyaltyPointsDiv.textContent = pointsDisplay;
-      loyaltyPointsDiv.style.display = 'block';
-    } else {
-      const pointsDisplay = '적립 포인트: 0p';
-      uiStore.dispatch({ type: 'SET_POINTS_DISPLAY', payload: pointsDisplay });
-      loyaltyPointsDiv.textContent = pointsDisplay;
-      loyaltyPointsDiv.style.display = 'block';
-    }
+    const pointsDisplay = totalPoints > 0 ? `적립 포인트: ${totalPoints}p` : '적립 포인트: 0p';
+    uiStore.dispatch({ type: 'SET_POINTS_DISPLAY', payload: pointsDisplay });
+    loyaltyPointsDiv.textContent = pointsDisplay;
+    loyaltyPointsDiv.style.display = 'block';
   }
 
   const discountInfoDiv = document.getElementById('discount-info');
   discountInfoDiv.innerHTML = '';
 
-  if (discRate > 0 && cartStore.getState().totalAmt > 0) {
-    const savedAmount = originalTotal - cartStore.getState().totalAmt;
+  const totalDiscountRate = (subTot - finalTotal) / subTot;
+  if (totalDiscountRate > 0 && finalTotal > 0) {
+    const savedAmount = subTot - finalTotal;
     uiStore.dispatch({ type: 'SET_DISCOUNT_INFO_VISIBLE', payload: true });
     discountInfoDiv.innerHTML = /*html*/ `
       <div class="bg-green-500/20 rounded-lg p-3">
         <div class="flex justify-between items-center mb-1">
           <span class="text-xs uppercase tracking-wide text-green-400">총 할인율</span>
-          <span class="text-sm font-medium text-green-400">${(discRate * 100).toFixed(1)}%</span>
+          <span class="text-sm font-medium text-green-400">${(totalDiscountRate * 100).toFixed(1)}%</span>
         </div>
         <div class="text-2xs text-gray-300">₩${Math.round(savedAmount).toLocaleString()} 할인되었습니다</div>
       </div>
@@ -906,7 +987,7 @@ const handleStockInfoUpdate = function () {
   stockInfo.textContent = stockMessages.join('\n');
 };
 
-// �� 포인트 계산 헬퍼 함수
+// 💰 포인트 계산 헬퍼 함수
 const calculateBonusPoints = () => {
   const cartDisp = document.getElementById('cart-items');
   const cartItems = Array.from(cartDisp.children);
@@ -915,61 +996,43 @@ const calculateBonusPoints = () => {
     return { finalPoints: 0, pointsDetail: [] };
   }
 
-  const basePoints = Math.floor(cartStore.getState().totalAmt / 1000);
-  let finalPoints = 0;
-  const pointsDetail = [];
+  const totalAmount = cartStore.getState().totalAmt;
+  const totalItems = cartStore.getState().itemCnt;
+  const isTuesday = new Date().getDay() === 2;
 
-  // 기본 포인트
+  // 새로운 계산 함수 사용
+  const finalPoints = calculateTotalPoints(totalAmount, cartItems, totalItems, isTuesday);
+
+  // 포인트 상세 내역 생성
+  const pointsDetail = [];
+  const basePoints = calculateBasePoints(totalAmount);
+
   if (basePoints > 0) {
-    finalPoints = basePoints;
     pointsDetail.push('기본: ' + basePoints + 'p');
   }
 
-  // 화요일 2배 포인트
-  const isTuesday = new Date().getDay() === 2;
   if (isTuesday && basePoints > 0) {
-    finalPoints = basePoints * 2;
     pointsDetail.push('화요일 2배');
   }
 
-  // 세트 구매 보너스 계산
-  const productTypes = {
-    hasKeyboard: false,
-    hasMouse: false,
-    hasMonitorArm: false,
-  };
-
-  cartItems.forEach((cartItem) => {
-    const product = productStore.getState().products.find((item) => item.id === cartItem.id);
-    if (!product) return;
-
-    if (product.id === PRODUCT_ONE) productTypes.hasKeyboard = true;
-    else if (product.id === p2) productTypes.hasMouse = true;
-    else if (product.id === product_3) productTypes.hasMonitorArm = true;
-  });
-
-  // 키보드 + 마우스 세트 보너스
-  if (productTypes.hasKeyboard && productTypes.hasMouse) {
-    finalPoints += 50;
-    pointsDetail.push('키보드+마우스 세트 +50p');
+  const setBonus = calculateSetBonus(cartItems);
+  if (setBonus > 0) {
+    if (setBonus >= 100) {
+      pointsDetail.push('풀세트 구매 +100p');
+    } else if (setBonus >= 50) {
+      pointsDetail.push('키보드+마우스 세트 +50p');
+    }
   }
 
-  // 풀세트 보너스
-  if (productTypes.hasKeyboard && productTypes.hasMouse && productTypes.hasMonitorArm) {
-    finalPoints += 100;
-    pointsDetail.push('풀세트 구매 +100p');
-  }
-
-  // 수량별 보너스
-  if (cartStore.getState().itemCnt >= 30) {
-    finalPoints += 100;
-    pointsDetail.push('대량구매(30개+) +100p');
-  } else if (cartStore.getState().itemCnt >= 20) {
-    finalPoints += 50;
-    pointsDetail.push('대량구매(20개+) +50p');
-  } else if (cartStore.getState().itemCnt >= 10) {
-    finalPoints += 20;
-    pointsDetail.push('대량구매(10개+) +20p');
+  const quantityBonus = calculateQuantityBonus(totalItems);
+  if (quantityBonus > 0) {
+    if (totalItems >= 30) {
+      pointsDetail.push('대량구매(30개+) +100p');
+    } else if (totalItems >= 20) {
+      pointsDetail.push('대량구매(20개+) +50p');
+    } else if (totalItems >= 10) {
+      pointsDetail.push('대량구매(10개+) +20p');
+    }
   }
 
   return { finalPoints, pointsDetail };
