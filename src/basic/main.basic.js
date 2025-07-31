@@ -24,10 +24,10 @@ import {
 import cartStore from './features/cart/cartStore.js';
 // 🛠️ 순수 유틸리티 함수들 import
 import { CartUtils } from './features/cart/cartUtils.js';
+import { setupObservers } from './features/observerFactory.js';
 import createProductStore from './features/product/productStore.js';
 import { ProductUtils } from './features/product/productUtils.js';
 import uiStore from './features/ui/uiStore.js';
-import createObserver from './utils/createObserver.js';
 import { formatNumber, formatPrice, safeParseInt, when, whenValue } from './utils/dataUtils.js';
 import { getElement, querySelector, setInnerHTML, setStyle, setTextContent } from './utils/domUtils.js';
 
@@ -511,58 +511,7 @@ function main() {
   root.innerHTML = createApp();
 
   // 🔍 Observers 활성화 - DOM 준비 후
-  const cartObserver = createObserver(cartStore, (state) => {
-    // 장바구니 상태 변경 시 UI 업데이트
-    uiRenderer.renderCartDisplay(state.itemCnt, state.totalAmt);
-
-    // 총액 변경 시 UI 업데이트
-    const totalDiv = querySelector(getElement('cart-total'), '.text-2xl');
-    if (totalDiv) {
-      totalDiv.textContent = formatPrice(state.totalAmt);
-    }
-
-    // 포인트 계산 및 표시
-    const loyaltyPointsDiv = getElement('loyalty-points');
-    if (loyaltyPointsDiv) {
-      const points = Math.floor(state.totalAmt / 1000);
-      const pointsDisplay = points > 0 ? `적립 포인트: ${points}p` : '적립 포인트: 0p';
-      loyaltyPointsDiv.textContent = pointsDisplay;
-      loyaltyPointsDiv.style.display = 'block';
-    }
-  });
-
-  const productObserver = createObserver(productStore, () => {
-    // 상품 상태 변경 시 UI 업데이트
-    onUpdateSelectOptions();
-    doUpdatePricesInCart();
-    handleCalculateCartStuff();
-  });
-
-  const uiObserver = createObserver(uiStore, (state) => {
-    // UI 상태 변경 시 DOM 업데이트
-    uiRenderer.renderManualOverlay(state.isManualOverlayVisible);
-
-    // 화요일 할인 표시
-    const tuesdaySpecial = getElement('tuesday-special');
-    if (tuesdaySpecial) {
-      if (state.isTuesdaySpecialVisible) {
-        tuesdaySpecial.classList.remove('hidden');
-      } else {
-        tuesdaySpecial.classList.add('hidden');
-      }
-    }
-
-    // 재고 메시지 표시
-    const stockInfo = getElement('stock-status');
-    if (stockInfo) {
-      stockInfo.textContent = state.stockMessage;
-    }
-  });
-
-  // Observer 활성화 (실제로 사용되도록)
-  cartObserver.subscribe();
-  productObserver.subscribe();
-  uiObserver.subscribe();
+  setupObservers(cartStore, productStore, uiStore, uiRenderer);
 
   // 이벤트 리스너 등록
   eventHandlers.registerEventListeners();
