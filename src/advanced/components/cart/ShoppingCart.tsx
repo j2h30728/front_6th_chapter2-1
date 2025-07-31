@@ -12,11 +12,12 @@ const ShoppingCart = () => {
     const cartItem = state.cart.items.find((item) => item.id === productId);
     if (!cartItem) return;
 
-    const newQuantity = cartItem.quantity + change;
+    const { quantity } = cartItem;
+    const newQuantity = quantity + change;
 
     if (newQuantity <= 0) {
       dispatch({ type: 'REMOVE_FROM_CART', payload: productId });
-      dispatch({ type: 'INCREASE_STOCK', payload: { productId, quantity: cartItem.quantity } });
+      dispatch({ type: 'INCREASE_STOCK', payload: { productId, quantity } });
       setErrorMsg('');
     } else {
       const product = state.product.products.find((p) => p.id === productId);
@@ -33,35 +34,39 @@ const ShoppingCart = () => {
   const handleRemoveItem = (productId: string) => {
     const cartItem = state.cart.items.find((item) => item.id === productId);
     if (cartItem) {
+      const { quantity } = cartItem;
       dispatch({ type: 'REMOVE_FROM_CART', payload: productId });
-      dispatch({ type: 'INCREASE_STOCK', payload: { productId, quantity: cartItem.quantity } });
+      dispatch({ type: 'INCREASE_STOCK', payload: { productId, quantity } });
       setErrorMsg('');
     }
   };
 
   const getProductDisplayName = (product: Product) => {
-    if (product.onSale && product.suggestSale) {
-      return `⚡💝${product.name}`;
-    } else if (product.onSale) {
-      return `⚡${product.name}`;
-    } else if (product.suggestSale) {
-      return `💝${product.name}`;
+    const { name, onSale, suggestSale } = product;
+
+    if (onSale && suggestSale) {
+      return `⚡💝${name}`;
+    } else if (onSale) {
+      return `⚡${name}`;
+    } else if (suggestSale) {
+      return `💝${name}`;
     }
-    return product.name;
+    return name;
   };
 
   const getProductPriceDisplay = (product: Product) => {
-    if (product.onSale || product.suggestSale) {
-      const priceClass =
-        product.onSale && product.suggestSale ? 'text-purple-600' : product.onSale ? 'text-red-500' : 'text-blue-500';
+    const { price, discountPrice, onSale, suggestSale } = product;
+
+    if (onSale || suggestSale) {
+      const priceClass = onSale && suggestSale ? 'text-purple-600' : onSale ? 'text-red-500' : 'text-blue-500';
       return (
         <>
-          <span className="line-through text-gray-400">₩{product.price.toLocaleString()}</span>{' '}
-          <span className={priceClass}>₩{product.discountPrice.toLocaleString()}</span>
+          <span className="line-through text-gray-400">₩{price.toLocaleString()}</span>{' '}
+          <span className={priceClass}>₩{discountPrice.toLocaleString()}</span>
         </>
       );
     }
-    return <span>₩{product.price.toLocaleString()}</span>;
+    return <span>₩{price.toLocaleString()}</span>;
   };
 
   return (

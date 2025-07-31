@@ -11,7 +11,7 @@ const OrderSummary = () => {
       const productInfo = product.products.find((p) => p.id === cartItem.id);
       return {
         ...productInfo,
-        quantity: cartItem.quantity, // 장바구니 수량으로 덮어쓰기
+        quantity: cartItem.quantity,
       };
     });
   };
@@ -19,8 +19,9 @@ const OrderSummary = () => {
   // 서브토탈 계산
   const calculateSubtotal = () => {
     return getCartItemsWithDetails().reduce((total, item) => {
-      const price = item.onSale ? item.discountPrice : item.price;
-      return total + (price || 0) * (item.quantity || 0);
+      const { onSale, discountPrice, price, quantity } = item;
+      const finalPrice = onSale ? discountPrice : price;
+      return total + (finalPrice || 0) * (quantity || 0);
     }, 0);
   };
 
@@ -28,14 +29,16 @@ const OrderSummary = () => {
   const calculateIndividualDiscounts = () => {
     return getCartItemsWithDetails()
       .map((item) => {
-        if (item.quantity >= UI_CONSTANTS.QUANTITY_THRESHOLD_FOR_BOLD) {
+        const { quantity, id, name, price } = item;
+
+        if (quantity >= UI_CONSTANTS.QUANTITY_THRESHOLD_FOR_BOLD) {
           const discountRate =
-            DISCOUNT_POLICIES.INDIVIDUAL_DISCOUNTS[item.id as keyof typeof DISCOUNT_POLICIES.INDIVIDUAL_DISCOUNTS];
+            DISCOUNT_POLICIES.INDIVIDUAL_DISCOUNTS[id as keyof typeof DISCOUNT_POLICIES.INDIVIDUAL_DISCOUNTS];
           if (discountRate) {
-            const originalPrice = (item.price || 0) * item.quantity;
+            const originalPrice = (price || 0) * quantity;
             const discountedPrice = originalPrice * (1 - discountRate);
             return {
-              name: item.name,
+              name,
               discount: discountRate * 100,
               savings: originalPrice - discountedPrice,
             };

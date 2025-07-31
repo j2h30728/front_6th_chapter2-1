@@ -39,7 +39,6 @@ const ProductPicker = () => {
 
     dispatch({ type: 'DECREASE_STOCK', payload: { productId: selectedProductId, quantity: 1 } });
     dispatch({ type: 'SET_LAST_SELECTED_PRODUCT_ID', payload: selectedProductId });
-    // 선택된 값 유지 (초기화하지 않음)
   };
 
   // 할인 아이콘 생성
@@ -53,33 +52,33 @@ const ProductPicker = () => {
   // 상품 표시 텍스트 생성
   const getProductDisplayText = (product: Product) => {
     const icon = getSaleIcon(product);
+    const { name, price, discountPrice, quantity, onSale, suggestSale } = product;
 
-    if (product.quantity === 0) {
-      return `${product.name} - ${product.price.toLocaleString()}원 (품절)`;
+    if (quantity === 0) {
+      return `${name} - ${price.toLocaleString()}원 (품절)`;
     }
 
-    let stockStatus = '';
-    if (product.quantity > 0 && product.quantity < STOCK_POLICIES.LOW_STOCK_THRESHOLD) {
-      stockStatus = ' (재고 부족)';
-    }
+    const stockStatus = quantity > 0 && quantity < STOCK_POLICIES.LOW_STOCK_THRESHOLD ? ' (재고 부족)' : '';
 
-    if (product.onSale && product.suggestSale) {
-      return `${icon}${product.name} - ${product.price.toLocaleString()}원 → ${product.discountPrice.toLocaleString()}원 (25% SUPER SALE!)${stockStatus}`;
-    } else if (product.onSale) {
-      return `${icon}${product.name} - ${product.price.toLocaleString()}원 → ${product.discountPrice.toLocaleString()}원 (20% SALE!)${stockStatus}`;
-    } else if (product.suggestSale) {
-      return `${icon}${product.name} - ${product.price.toLocaleString()}원 → ${product.discountPrice.toLocaleString()}원 (5% 추천할인!)${stockStatus}`;
+    if (onSale && suggestSale) {
+      return `${icon}${name} - ${price.toLocaleString()}원 → ${discountPrice.toLocaleString()}원 (25% SUPER SALE!)${stockStatus}`;
+    } else if (onSale) {
+      return `${icon}${name} - ${price.toLocaleString()}원 → ${discountPrice.toLocaleString()}원 (20% SALE!)${stockStatus}`;
+    } else if (suggestSale) {
+      return `${icon}${name} - ${price.toLocaleString()}원 → ${discountPrice.toLocaleString()}원 (5% 추천할인!)${stockStatus}`;
     } else {
-      return `${product.name} - ${product.price.toLocaleString()}원${stockStatus}`;
+      return `${name} - ${price.toLocaleString()}원${stockStatus}`;
     }
   };
 
   // 옵션 클래스 결정
   const getOptionClass = (product: Product) => {
-    if (product.quantity === 0) return 'text-gray-400';
-    if (product.onSale && product.suggestSale) return 'text-purple-600 font-bold';
-    if (product.onSale) return 'text-red-500 font-bold';
-    if (product.suggestSale) return 'text-blue-500 font-bold';
+    const { quantity, onSale, suggestSale } = product;
+
+    if (quantity === 0) return 'text-gray-400';
+    if (onSale && suggestSale) return 'text-purple-600 font-bold';
+    if (onSale) return 'text-red-500 font-bold';
+    if (suggestSale) return 'text-blue-500 font-bold';
     return '';
   };
 

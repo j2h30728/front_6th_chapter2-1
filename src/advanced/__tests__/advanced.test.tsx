@@ -29,10 +29,12 @@ describe('advanced 테스트', () => {
   };
 
   const expectProductInfo = (option: HTMLOptionElement, product: Product) => {
-    expect(option.value).toBe(product.id);
-    expect(option.textContent).toContain(product.name);
-    expect(option.textContent).toContain(product.price);
-    if (product.quantity === 0) {
+    const { id, name, price, quantity } = product;
+
+    expect(option.value).toBe(id);
+    expect(option.textContent).toContain(name);
+    expect(option.textContent).toContain(price);
+    if (quantity === 0) {
       expect(option.disabled).toBe(true);
       expect(option.textContent).toContain('품절');
     }
