@@ -1,3 +1,22 @@
+export interface Product {
+  id: string;
+  name: string;
+  discountPrice: number;
+  price: number;
+  quantity: number;
+  onSale: boolean;
+  suggestSale: boolean;
+  discountRate: number;
+}
+
+export const PRODUCT_IDS = {
+  p1: 'p1',
+  p2: 'p2',
+  p3: 'p3',
+  p4: 'p4',
+  p5: 'p5',
+} as const;
+
 export const PRODUCTS = [
   {
     id: 'p1',
@@ -50,3 +69,16 @@ export const PRODUCTS = [
     discountRate: 0.25,
   },
 ];
+
+export const createInitialProducts = (): Product[] => {
+  return PRODUCTS.map((product) => ({
+    id: product.id,
+    name: product.name,
+    discountPrice: product.discountPrice,
+    price: product.price,
+    quantity: product.quantity,
+    onSale: product.onSale,
+    suggestSale: product.suggestSale,
+    discountRate: product.discountRate,
+  }));
+};
