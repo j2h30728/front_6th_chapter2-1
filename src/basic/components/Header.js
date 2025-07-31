@@ -1,4 +1,3 @@
-// 🧩 Header 컴포넌트
 export const createHeader = (props = {}) => /*html*/ `
   <div class="mb-8">
     <h1 class="text-xs font-medium tracking-extra-wide uppercase mb-2">🛒 Hanghae Online Store</h1>

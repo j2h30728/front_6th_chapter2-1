@@ -1,4 +1,3 @@
-// 🏪 상품 도메인 옵저버
 import createObserver from '../../utils/createObserver.js';
 
 /**
