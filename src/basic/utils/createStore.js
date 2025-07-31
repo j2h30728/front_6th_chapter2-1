@@ -1,4 +1,4 @@
-import createObserver from './createObserver';
+import createObserver from './createObserver.js';
 
 const createStore = (reducer, initialState) => {
   const { subscribe, notify } = createObserver();
