@@ -23,27 +23,9 @@ export const cartEventHandlers = {
     const existingCartItem = cartItemsContainer.querySelector(`#${productToAdd.id}`);
 
     if (existingCartItem) {
-      // 기존 아이템 수량 증가
-      const currentQuantity = CartUtils.getQuantityFromCartItem(existingCartItem);
-      const newQuantity = currentQuantity + 1;
-
-      if (newQuantity <= productToAdd.stockQuantity + currentQuantity) {
-        CartUtils.setQuantityToCartItem(existingCartItem, newQuantity);
-        productStore.dispatch({
-          type: 'DECREASE_STOCK',
-          payload: { productId: productToAdd.id, quantity: 1 },
-        });
-      } else {
-        alert('재고가 부족합니다.');
-        return;
-      }
+      handleExistingCartItem(existingCartItem, productToAdd, productStore);
     } else {
-      // 새 아이템 추가
-      cartItemsContainer.insertAdjacentHTML('beforeend', CartUtils.createCartItemHTML(productToAdd));
-      productStore.dispatch({
-        type: 'DECREASE_STOCK',
-        payload: { productId: productToAdd.id, quantity: 1 },
-      });
+      handleNewCartItem(cartItemsContainer, productToAdd, productStore);
     }
 
     handleCalculateCartStuff();
@@ -51,55 +33,10 @@ export const cartEventHandlers = {
   },
 
   handleCartItemClick: (event, target, handleCalculateCartStuff, onUpdateSelectOptions, cartStore, productStore) => {
-    const productState = productStore.getState();
-
     if (target.classList.contains('quantity-change')) {
-      const cartItemElement = target.closest('.cart-item');
-      if (!cartItemElement) return;
-
-      const productId = cartItemElement.id;
-      const quantityChange = parseInt(target.dataset.change);
-      const product = ProductUtils.findProductById(productId, productState.products);
-
-      if (!product) return;
-
-      // 수량 변경
-      const currentQuantity = CartUtils.getQuantityFromCartItem(cartItemElement);
-      const newQuantity = currentQuantity + quantityChange;
-
-      if (newQuantity > 0 && newQuantity <= product.stockQuantity + currentQuantity) {
-        CartUtils.setQuantityToCartItem(cartItemElement, newQuantity);
-        productStore.dispatch({
-          type: 'DECREASE_STOCK',
-          payload: { productId, quantity: quantityChange },
-        });
-        handleCalculateCartStuff();
-        onUpdateSelectOptions();
-      } else if (newQuantity <= 0) {
-        productStore.dispatch({
-          type: 'INCREASE_STOCK',
-          payload: { productId, quantity: currentQuantity },
-        });
-        cartItemElement.remove();
-        handleCalculateCartStuff();
-        onUpdateSelectOptions();
-      } else {
-        alert('재고가 부족합니다.');
-      }
+      handleQuantityChange(event, target, handleCalculateCartStuff, onUpdateSelectOptions, productStore);
     } else if (target.classList.contains('remove-item')) {
-      const cartItemElement = target.closest('.cart-item');
-      if (!cartItemElement) return;
-
-      const productId = cartItemElement.id;
-      const currentQuantity = CartUtils.getQuantityFromCartItem(cartItemElement);
-
-      productStore.dispatch({
-        type: 'INCREASE_STOCK',
-        payload: { productId, quantity: currentQuantity },
-      });
-      cartItemElement.remove();
-      handleCalculateCartStuff();
-      onUpdateSelectOptions();
+      handleRemoveItem(target, handleCalculateCartStuff, onUpdateSelectOptions, productStore);
     }
   },
 
@@ -111,6 +48,84 @@ export const cartEventHandlers = {
   handleCartItemLeave: (event, target) => {
     target.style.transform = 'scale(1)';
   },
+};
+
+// 기존 장바구니 아이템 처리 함수
+const handleExistingCartItem = (existingCartItem, productToAdd, productStore) => {
+  const currentQuantity = CartUtils.getQuantityFromCartItem(existingCartItem);
+  const newQuantity = currentQuantity + 1;
+
+  if (newQuantity > productToAdd.stockQuantity + currentQuantity) {
+    alert('재고가 부족합니다.');
+    return;
+  }
+
+  CartUtils.setQuantityToCartItem(existingCartItem, newQuantity);
+  productStore.dispatch({
+    type: 'DECREASE_STOCK',
+    payload: { productId: productToAdd.id, quantity: 1 },
+  });
+};
+
+// 새 장바구니 아이템 추가 함수
+const handleNewCartItem = (cartItemsContainer, productToAdd, productStore) => {
+  cartItemsContainer.insertAdjacentHTML('beforeend', CartUtils.createCartItemHTML(productToAdd));
+  productStore.dispatch({
+    type: 'DECREASE_STOCK',
+    payload: { productId: productToAdd.id, quantity: 1 },
+  });
+};
+
+// 수량 변경 처리 함수
+const handleQuantityChange = (event, target, handleCalculateCartStuff, onUpdateSelectOptions, productStore) => {
+  const cartItemElement = target.closest('.cart-item');
+  if (!cartItemElement) return;
+
+  const productId = cartItemElement.id;
+  const quantityChange = parseInt(target.dataset.change);
+  const product = ProductUtils.findProductById(productId, productStore.getState().products);
+
+  if (!product) return;
+
+  const currentQuantity = CartUtils.getQuantityFromCartItem(cartItemElement);
+  const newQuantity = currentQuantity + quantityChange;
+
+  if (newQuantity > 0 && newQuantity <= product.stockQuantity + currentQuantity) {
+    CartUtils.setQuantityToCartItem(cartItemElement, newQuantity);
+    productStore.dispatch({
+      type: 'DECREASE_STOCK',
+      payload: { productId, quantity: quantityChange },
+    });
+    handleCalculateCartStuff();
+    onUpdateSelectOptions();
+  } else if (newQuantity <= 0) {
+    productStore.dispatch({
+      type: 'INCREASE_STOCK',
+      payload: { productId, quantity: currentQuantity },
+    });
+    cartItemElement.remove();
+    handleCalculateCartStuff();
+    onUpdateSelectOptions();
+  } else {
+    alert('재고가 부족합니다.');
+  }
+};
+
+// 아이템 제거 처리 함수
+const handleRemoveItem = (target, handleCalculateCartStuff, onUpdateSelectOptions, productStore) => {
+  const cartItemElement = target.closest('.cart-item');
+  if (!cartItemElement) return;
+
+  const productId = cartItemElement.id;
+  const currentQuantity = CartUtils.getQuantityFromCartItem(cartItemElement);
+
+  productStore.dispatch({
+    type: 'INCREASE_STOCK',
+    payload: { productId, quantity: currentQuantity },
+  });
+  cartItemElement.remove();
+  handleCalculateCartStuff();
+  onUpdateSelectOptions();
 };
 
 export const manualEventHandlers = {
