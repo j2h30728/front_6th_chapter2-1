@@ -97,4 +97,28 @@ const createProductStore = (initialState) => {
   return createStore(productReducer, initialState);
 };
 
+// 🏪 상품 액션 생성자
+export const productActions = {
+  decreaseStock: (productId, quantity) => ({
+    type: 'DECREASE_STOCK',
+    payload: { productId, quantity },
+  }),
+  increaseStock: (productId, quantity) => ({
+    type: 'INCREASE_STOCK',
+    payload: { productId, quantity },
+  }),
+  setProductSale: (productId, onSale, suggestSale) => ({
+    type: 'SET_PRODUCT_SALE',
+    payload: { productId, onSale, suggestSale },
+  }),
+  setProductPrice: (productId, price) => ({
+    type: 'SET_PRODUCT_PRICE',
+    payload: { productId, price },
+  }),
+  setSaleStatus: (productId, onSale, suggestSale) => ({
+    type: 'SET_SALE_STATUS',
+    payload: { productId, onSale, suggestSale },
+  }),
+};
+
 export default createProductStore;

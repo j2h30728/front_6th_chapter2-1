@@ -7,7 +7,6 @@ import {
   createRightColumn,
 } from './components/index.js';
 import { STOCK_POLICIES, UI_CONSTANTS } from './constants/index.js';
-import { calculateCartData } from './features/calculations/cartCalculations.js';
 import {
   cartStore,
   createInitialProductState,
@@ -51,10 +50,7 @@ const onUpdateSelectOptions = () => {
 };
 
 const handleCalculateCartStuff = () => {
-  const cartData = calculateCartData(getElement, productStore);
-  const stores = { cartStore, uiStore, productStore };
-
-  updateAllUI(cartData, stores, uiRenderer, STOCK_POLICIES);
+  updateAllUI(getElement, productStore, cartStore, uiStore, uiRenderer, STOCK_POLICIES);
   doRenderBonusPoints(getElement, cartStore, productStore);
 };
 

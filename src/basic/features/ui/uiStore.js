@@ -41,4 +41,17 @@ const uiStore = createStore(uiReducer, {
   pointsDisplay: UI_CONSTANTS.DEFAULT_POINTS_DISPLAY,
 });
 
+// 🖥️ UI 액션 생성자
+export const uiActions = {
+  toggleManualOverlay: () => ({ type: 'TOGGLE_MANUAL_OVERLAY' }),
+  setManualOverlayVisible: (isVisible) => ({
+    type: 'SET_MANUAL_OVERLAY_VISIBLE',
+    payload: isVisible,
+  }),
+  toggleTuesdaySpecial: (isVisible) => ({
+    type: 'TOGGLE_TUESDAY_SPECIAL',
+    payload: isVisible,
+  }),
+};
+
 export default uiStore;

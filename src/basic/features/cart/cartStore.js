@@ -1,4 +1,3 @@
-import { UI_CONSTANTS } from '../../constants/index.js';
 import createStore from '../../utils/createStore.js';
 
 const cartReducer = (state, action) => {
@@ -6,7 +5,7 @@ const cartReducer = (state, action) => {
     case 'SET_ITEM_COUNT':
       return { ...state, itemCount: action.payload };
     case 'RESET_ITEM_COUNT':
-      return { ...state, itemCount: UI_CONSTANTS.DEFAULT_ITEM_COUNT };
+      return { ...state, itemCount: 0 };
     case 'ADD_TO_ITEM_COUNT':
       return { ...state, itemCount: state.itemCount + action.payload };
     case 'SET_TOTAL_AMOUNT':
@@ -17,9 +16,8 @@ const cartReducer = (state, action) => {
       return { ...state, lastSelectedProductId: action.payload };
     case 'RESET_CART':
       return {
-        ...state,
-        itemCount: UI_CONSTANTS.DEFAULT_ITEM_COUNT,
-        totalAmount: UI_CONSTANTS.DEFAULT_TOTAL_AMOUNT,
+        itemCount: 0,
+        totalAmount: 0,
         lastSelectedProductId: null,
       };
     default:
@@ -28,9 +26,20 @@ const cartReducer = (state, action) => {
 };
 
 const cartStore = createStore(cartReducer, {
-  itemCount: UI_CONSTANTS.DEFAULT_ITEM_COUNT,
-  totalAmount: UI_CONSTANTS.DEFAULT_TOTAL_AMOUNT,
+  itemCount: 0,
+  totalAmount: 0,
   lastSelectedProductId: null,
 });
+
+// 🛒 장바구니 액션 생성자
+export const cartActions = {
+  setItemCount: (itemCount) => ({ type: 'SET_ITEM_COUNT', payload: itemCount }),
+  resetItemCount: () => ({ type: 'RESET_ITEM_COUNT' }),
+  addToItemCount: (amount) => ({ type: 'ADD_TO_ITEM_COUNT', payload: amount }),
+  setTotalAmount: (totalAmount) => ({ type: 'SET_TOTAL_AMOUNT', payload: totalAmount }),
+  addToTotalAmount: (amount) => ({ type: 'ADD_TO_TOTAL_AMOUNT', payload: amount }),
+  setLastSelectedProductId: (productId) => ({ type: 'SET_LAST_SELECTED_PRODUCT_ID', payload: productId }),
+  resetCart: () => ({ type: 'RESET_CART' }),
+};
 
 export default cartStore;

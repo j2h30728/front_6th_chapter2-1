@@ -1,62 +1,53 @@
-import {
-  createBulkDiscountHTML,
-  createItemDiscountHTML,
-  createShippingHTML,
-  createSummaryItemHTML,
-  createSummarySubtotalHTML,
-  createTuesdayDiscountHTML,
-} from '../../components/index.js';
+import { cartActions } from '../cart/cartStore.js';
 import { CartUtils } from '../cart/cartUtils.js';
+import { discountService } from '../discount/discountService.js';
 import { ProductUtils } from '../product/productUtils.js';
-
-const UI_STYLES = {
-  HIDDEN: 'none',
-  VISIBLE: 'block',
-};
+import { uiActions } from '../ui/uiStore.js';
 
 /**
  * 장바구니 표시 업데이트
- * @param {number} totalItems - 총 아이템 수
+ * @param {Array} cartItems - 장바구니 아이템들
  * @param {number} finalTotal - 최종 총액
+ * @param {number} totalItems - 총 아이템 수
  * @param {Object} cartStore - 장바구니 스토어
  * @param {Object} uiRenderer - UI 렌더러
  */
-export const updateCartDisplay = (totalItems, finalTotal, cartStore, uiRenderer) => {
-  cartStore.dispatch({ type: 'SET_TOTAL_AMOUNT', payload: finalTotal });
-  cartStore.dispatch({ type: 'SET_ITEM_COUNT', payload: totalItems });
+export const updateCartDisplay = (cartItems, finalTotal, totalItems, cartStore, uiRenderer) => {
   uiRenderer.renderCartDisplay(totalItems, finalTotal);
+  cartStore.dispatch(cartActions.setTotalAmount(finalTotal));
+  cartStore.dispatch(cartActions.setItemCount(totalItems));
 };
 
 /**
  * 화요일 특별 할인 표시 업데이트
  * @param {boolean} isTuesday - 화요일 여부
  * @param {number} finalTotal - 최종 총액
- * @param {Object} uiStore - UI 스토어
  * @param {Object} uiRenderer - UI 렌더러
+ * @param {Object} uiStore - UI 스토어
  */
-export const updateTuesdaySpecialDisplay = (isTuesday, finalTotal, uiStore, uiRenderer) => {
-  uiStore.dispatch({ type: 'TOGGLE_TUESDAY_SPECIAL', payload: isTuesday && finalTotal > 0 });
+export const updateTuesdaySpecialDisplay = (isTuesday, finalTotal, uiRenderer, uiStore) => {
   uiRenderer.renderTuesdaySpecial(isTuesday, finalTotal);
+  uiStore.dispatch(uiActions.toggleTuesdaySpecial(isTuesday && finalTotal > 0));
 };
 
 /**
- * 요약 상세 정보 업데이트
+ * 주문 요약 상세 업데이트
  * @param {Array} cartItems - 장바구니 아이템들
  * @param {number} subtotal - 소계
- * @param {Array} itemDiscounts - 아이템 할인 정보
- * @param {number} bulkDiscount - 대량 할인
- * @param {boolean} isTuesday - 화요일 여부
  * @param {number} finalTotal - 최종 총액
+ * @param {number} bulkDiscount - 대량 할인
+ * @param {Array} itemDiscounts - 개별 할인들
+ * @param {boolean} isTuesday - 화요일 여부
  * @param {Object} productStore - 상품 스토어
  * @param {Object} uiRenderer - UI 렌더러
  */
 export const updateSummaryDetails = (
   cartItems,
   subtotal,
-  itemDiscounts,
-  bulkDiscount,
-  isTuesday,
   finalTotal,
+  bulkDiscount,
+  itemDiscounts,
+  isTuesday,
   productStore,
   uiRenderer
 ) => {
@@ -142,48 +133,141 @@ export const renderPointsDisplay = (pointsElement, finalPoints, pointsDetail) =>
 
   if (finalPoints > 0) {
     pointsElement.innerHTML = createBonusPointsHTML(finalPoints, pointsDetail);
+    pointsElement.style.display = 'block';
   } else {
-    pointsElement.textContent = '적립 포인트: 0p';
+    pointsElement.style.display = 'none';
   }
-  pointsElement.style.display = UI_STYLES.VISIBLE;
 };
 
 /**
  * 보너스 포인트 HTML 생성
- * @param {number} points - 포인트
- * @param {Array} details - 상세 정보
+ * @param {number} finalPoints - 최종 포인트
+ * @param {Array} pointsDetail - 포인트 상세 정보
  * @returns {string} HTML 문자열
  */
-export const createBonusPointsHTML = (points, details) => /*html*/ `
-  <div>적립 포인트: <span class="font-bold">${points}p</span></div>
-  <div class="text-2xs opacity-70 mt-1">${details.join(', ')}</div>
-`;
+export const createBonusPointsHTML = (finalPoints, pointsDetail) => {
+  const detailHTML =
+    pointsDetail.length > 0 ? `<div class="text-xs text-gray-400">${pointsDetail.join(', ')}</div>` : '';
+  return `
+    <div class="bg-blue-500/20 rounded-lg p-3">
+      <div class="text-sm font-medium text-blue-400">적립 포인트: ${finalPoints}p</div>
+      ${detailHTML}
+    </div>
+  `;
+};
 
 /**
- * 모든 UI 업데이트 실행
- * @param {Object} cartData - 장바구니 데이터
- * @param {Object} stores - 스토어들
+ * 모든 UI 업데이트
+ * @param {Function} getElement - DOM 요소 가져오기 함수
+ * @param {Object} productStore - 상품 스토어
+ * @param {Object} cartStore - 장바구니 스토어
+ * @param {Object} uiStore - UI 스토어
  * @param {Object} uiRenderer - UI 렌더러
  * @param {Object} STOCK_POLICIES - 재고 정책 상수
  */
-export const updateAllUI = (cartData, stores, uiRenderer, STOCK_POLICIES) => {
-  const { totalItems, finalTotal, isTuesday, subtotal, itemDiscounts, bulkDiscount, totalPoints, cartItems } = cartData;
-  const { cartStore, uiStore, productStore } = stores;
+export const updateAllUI = (getElement, productStore, cartStore, uiStore, uiRenderer, STOCK_POLICIES) => {
+  const cartData = calculateCartData(getElement, productStore);
+  const { cartItems, totalAmount, totalItems } = cartData;
 
-  updateCartDisplay(totalItems, finalTotal, cartStore, uiRenderer);
-  updateTuesdaySpecialDisplay(isTuesday, finalTotal, uiStore, uiRenderer);
+  // 할인 계산
+  const itemDiscounts = discountService.createDiscountInfo(cartItems, productStore);
+  const discountResult = discountService.applyDiscounts(totalAmount, itemDiscounts, totalItems);
+  const { finalTotal, isTuesday, bulkDiscount } = discountResult;
+
+  updateCartDisplay(cartItems, finalTotal, totalItems, cartStore, uiRenderer);
+  updateTuesdaySpecialDisplay(isTuesday, finalTotal, uiRenderer, uiStore);
   updateSummaryDetails(
     cartItems,
-    subtotal,
-    itemDiscounts,
-    bulkDiscount,
-    isTuesday,
+    totalAmount,
     finalTotal,
+    bulkDiscount,
+    itemDiscounts,
+    isTuesday,
     productStore,
     uiRenderer
   );
-  updatePointsDisplay(totalPoints, uiRenderer);
-  updateDiscountInfo(subtotal, finalTotal, uiRenderer);
+  updatePointsDisplay(calculateTotalPoints(finalTotal, cartItems, totalItems, isTuesday, productStore), uiRenderer);
+  updateDiscountInfo(totalAmount, finalTotal, uiRenderer);
   updateStockMessages(productStore, uiRenderer, STOCK_POLICIES);
   updateCartItemStyles(cartItems, uiRenderer);
+};
+
+// HTML 생성 함수들
+const createSummaryItemHTML = (product, quantity) => /*html*/ `
+  <div class="flex justify-between text-sm">
+    <span>${product.name} × ${quantity}</span>
+    <span>₩${(product.price * quantity).toLocaleString()}</span>
+  </div>
+`;
+
+const createBulkDiscountHTML = () => /*html*/ `
+  <div class="flex justify-between text-sm text-red-500">
+    <span>대량 할인 (25%)</span>
+    <span>-₩${Math.round(1000000 * 0.25).toLocaleString()}</span>
+  </div>
+`;
+
+const createItemDiscountHTML = (discount) => /*html*/ `
+  <div class="flex justify-between text-sm text-blue-500">
+    <span>${discount.name} 할인</span>
+    <span>-₩${Math.round(discount.discount).toLocaleString()}</span>
+  </div>
+`;
+
+const createTuesdayDiscountHTML = () => /*html*/ `
+  <div class="flex justify-between text-sm text-green-500">
+    <span>화요일 할인 (10%)</span>
+    <span>-₩${Math.round(1000000 * 0.1).toLocaleString()}</span>
+  </div>
+`;
+
+const createSummarySubtotalHTML = (subtotal) => /*html*/ `
+  <div class="flex justify-between font-medium border-t pt-2">
+    <span>소계</span>
+    <span>₩${subtotal.toLocaleString()}</span>
+  </div>
+`;
+
+const createShippingHTML = () => /*html*/ `
+  <div class="flex justify-between text-sm text-gray-500">
+    <span>배송비</span>
+    <span>무료</span>
+  </div>
+`;
+
+// 유틸리티 함수들
+const calculateCartData = (getElement, productStore) => {
+  const cartDisp = getElement('cart-items');
+  if (!cartDisp) {
+    return {
+      cartItems: [],
+      totalAmount: 0,
+      totalItems: 0,
+    };
+  }
+
+  const cartItems = Array.from(cartDisp.children);
+  let totalAmount = 0;
+  let totalItems = 0;
+
+  cartItems.forEach((cartItem) => {
+    const productId = cartItem.id;
+    const quantity = CartUtils.getQuantityFromCartItem(cartItem);
+    const product = ProductUtils.findProductById(productId, productStore.getState().products);
+
+    if (product) {
+      totalAmount += product.price * quantity;
+      totalItems += quantity;
+    }
+  });
+
+  return {
+    cartItems,
+    totalAmount,
+    totalItems,
+  };
+};
+
+const calculateTotalPoints = (finalTotal, cartItems, totalItems, isTuesday) => {
+  return Math.floor(finalTotal * 0.001) * (isTuesday ? 2 : 1);
 };
