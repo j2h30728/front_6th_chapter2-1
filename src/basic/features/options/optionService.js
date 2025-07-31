@@ -1,5 +1,3 @@
-// 🏪 옵션 관리 서비스
-
 /**
  * 옵션 관리 서비스
  */
@@ -13,7 +11,6 @@ export const optionService = {
   updateSelectOptions: (productStore, ProductUtils, UI_CONSTANTS) => {
     const sel = document.getElementById('product-select');
 
-    // 전체 재고 계산
     const totalStock = productStore.getState().products.reduce((total, product) => total + product.stockQuantity, 0);
 
     // 상품을 option HTML로 변환하는 함수

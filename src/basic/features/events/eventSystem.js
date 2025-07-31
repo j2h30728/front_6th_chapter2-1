@@ -1,4 +1,3 @@
-// 🏪 이벤트 시스템 - WeakMap, Set, Map 활용
 export const eventSystem = {
   // WeakMap: 이벤트 엘리먼트 관리 (메모리 누수 방지)
   eventElements: new WeakMap(),

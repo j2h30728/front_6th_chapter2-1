@@ -1,8 +1,6 @@
-// 🎨 UI 도메인 Store
 import { UI_CONSTANTS } from '../../constants/index.js';
 import createStore from '../../utils/createStore.js';
 
-// 🎨 UI 리듀서
 const uiReducer = (state, action) => {
   switch (action.type) {
     case 'TOGGLE_MANUAL_OVERLAY':
@@ -34,7 +32,6 @@ const uiReducer = (state, action) => {
   }
 };
 
-// 🎨 UI Store 인스턴스
 const uiStore = createStore(uiReducer, {
   isManualOverlayVisible: false,
   isTuesdaySpecialVisible: false,

@@ -1,4 +1,3 @@
-// 🏪 데이터 변환 서비스
 import { PRODUCT_DATA, PRODUCT_IDS } from '../../constants/index.js';
 
 /**

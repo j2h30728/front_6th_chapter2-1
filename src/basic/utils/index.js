@@ -1,4 +1,3 @@
-// 🛠️ 유틸리티 exports
 export { createObserver } from './createObserver.js';
 export { createStore } from './createStore.js';
 export { formatNumber, formatPrice, safeParseInt, when, whenValue } from './dataUtils.js';

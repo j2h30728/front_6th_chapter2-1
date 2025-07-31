@@ -1,4 +1,3 @@
-// 🏭 옵저버 팩토리 - 모든 도메인 옵저버 생성 및 관리
 import { createCartObserver } from './cart/cartObserver.js';
 import { createProductObserver } from './product/productObserver.js';
 import { createUIObserver } from './ui/uiObserver.js';

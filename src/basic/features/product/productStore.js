@@ -1,7 +1,5 @@
-// 🏪 상품 도메인 Store
 import createStore from '../../utils/createStore.js';
 
-// 🏪 상품 리듀서
 const productReducer = (state, action) => {
   switch (action.type) {
     case 'DECREASE_STOCK':
@@ -95,7 +93,6 @@ const productReducer = (state, action) => {
   }
 };
 
-// 🏪 상품 Store 인스턴스 (초기 상태는 외부에서 주입)
 const createProductStore = (initialState) => {
   return createStore(productReducer, initialState);
 };

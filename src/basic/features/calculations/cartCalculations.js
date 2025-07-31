@@ -1,10 +1,8 @@
-// 🧮 장바구니 계산 로직 모듈
 import { CartUtils } from '../cart/cartUtils.js';
 import { discountService } from '../discount/index.js';
 import { pointService } from '../points/index.js';
 import { ProductUtils } from '../product/productUtils.js';
 
-// 📅 날짜 관련 상수
 const DAYS_OF_WEEK = {
   TUESDAY: 2,
 };

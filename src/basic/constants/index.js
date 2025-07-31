@@ -1,4 +1,3 @@
-// 🏪 상품 ID 상수 - 일관된 네이밍으로 통일
 export const PRODUCT_IDS = {
   KEYBOARD: 'p1',
   MOUSE: 'p2',
@@ -7,7 +6,6 @@ export const PRODUCT_IDS = {
   SPEAKER: 'p5',
 };
 
-// 🏪 할인 정책 설정
 export const DISCOUNT_POLICIES = {
   // 개별 상품 할인율 (10개 이상 구매 시)
   INDIVIDUAL_DISCOUNTS: {
@@ -39,7 +37,6 @@ export const DISCOUNT_POLICIES = {
   },
 };
 
-// 🏪 포인트 정책 설정
 export const POINT_POLICIES = {
   // 기본 포인트 적립률
   BASE_RATE: 0.001, // 0.1% (1000원당 1포인트)
@@ -61,13 +58,11 @@ export const POINT_POLICIES = {
   },
 };
 
-// 🏪 재고 관리 설정
 export const STOCK_POLICIES = {
   LOW_STOCK_THRESHOLD: 5, // 5개 미만 시 재고 부족 표시
   OUT_OF_STOCK: 0, // 0개 시 품절
 };
 
-// 🏪 상품 정보 설정
 export const PRODUCT_DATA = {
   KEYBOARD: {
     name: '버그 없애는 키보드',
@@ -96,7 +91,6 @@ export const PRODUCT_DATA = {
   },
 };
 
-// 🏪 UI 설정
 export const UI_CONSTANTS = {
   DEFAULT_ITEM_COUNT: 0,
   DEFAULT_TOTAL_AMOUNT: 0,
@@ -106,7 +100,6 @@ export const UI_CONSTANTS = {
   TOTAL_STOCK_WARNING_THRESHOLD: 50,
 };
 
-// 🏪 타이머 설정
 export const TIMER_SETTINGS = {
   LIGHTNING_SALE_INTERVAL: 30000, // 30초
   LIGHTNING_SALE_DELAY_MAX: 10000, // 최대 10초 지연

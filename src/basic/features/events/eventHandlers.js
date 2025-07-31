@@ -1,10 +1,8 @@
-// 🏪 이벤트 핸들러 모듈
 import { getElement } from '../../utils/domUtils.js';
 import { CartUtils } from '../cart/cartUtils.js';
 import { ProductUtils } from '../product/productUtils.js';
 import uiRenderer from '../ui/uiRenderer.js';
 
-// 🛒 장바구니 이벤트 핸들러들
 export const cartEventHandlers = {
   handleAddToCart: (handleCalculateCartStuff, cartStore, productStore) => {
     const productSelectElement = getElement('product-select');
@@ -115,7 +113,6 @@ export const cartEventHandlers = {
   },
 };
 
-// 📖 매뉴얼 이벤트 핸들러들
 export const manualEventHandlers = {
   handleManualToggle: (uiStore) => {
     uiStore.dispatch({ type: 'TOGGLE_MANUAL_OVERLAY' });
@@ -136,7 +133,6 @@ export const manualEventHandlers = {
   },
 };
 
-// 🎯 통합 이벤트 핸들러들
 export const eventHandlers = {
   handleAddToCart: (handleCalculateCartStuff, cartStore, productStore) =>
     cartEventHandlers.handleAddToCart(handleCalculateCartStuff, cartStore, productStore),

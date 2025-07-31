@@ -1,4 +1,3 @@
-// 🧩 RightColumn 컴포넌트
 export const createRightColumn = () => /*html*/ `
   <div class="bg-black text-white p-8 flex flex-col">
     <h2 class="text-xs font-medium mb-5 tracking-extra-wide uppercase">Order Summary</h2>

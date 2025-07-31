@@ -1,4 +1,3 @@
-// 💰 가격 업데이트 로직 모듈
 import { ProductUtils } from './productUtils.js';
 
 /**

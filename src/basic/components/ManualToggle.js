@@ -1,4 +1,3 @@
-// 🧩 ManualToggle 컴포넌트
 export const createManualToggleButton = () => /*html*/ `
   <button id="manual-toggle" class="fixed top-4 right-4 bg-black text-white p-3 rounded-full hover:bg-gray-900 transition-colors z-50">
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

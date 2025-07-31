@@ -1,4 +1,3 @@
-// 🏪 할인 계산 서비스
 import { DISCOUNT_POLICIES, UI_CONSTANTS } from '../../constants/index.js';
 import { CartUtils } from '../cart/index.js';
 import { ProductUtils } from '../product/index.js';

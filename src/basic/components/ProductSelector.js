@@ -1,4 +1,3 @@
-// 🧩 ProductSelector 컴포넌트
 export const createProductSelector = () => /*html*/ `
   <div class="mb-6 pb-6 border-b border-gray-200">
     <select id="product-select" class="w-full p-3 border border-gray-300 rounded-lg text-base mb-3"></select>

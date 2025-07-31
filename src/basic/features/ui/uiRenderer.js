@@ -1,11 +1,9 @@
-// 🏪 UI 렌더링 모듈 (React 스타일)
 import { UI_CONSTANTS } from '../../constants/index.js';
 import { formatNumber, when, whenValue } from '../../utils/dataUtils.js';
 import { getElement, querySelector, setInnerHTML, setStyle, setTextContent } from '../../utils/domUtils.js';
 import { CartUtils } from '../cart/cartUtils.js';
 
 const uiRenderer = {
-  // 상태 기반 UI 업데이트
   renderCartDisplay: (totalItems, finalTotal) => {
     setTextContent('item-count', `🛍️ ${totalItems} items in cart`);
 
@@ -61,7 +59,6 @@ const uiRenderer = {
   renderCartItemStyles: (cartItems) => {
     Array.from(cartItems).forEach((cartItem) => {
       const quantity = CartUtils.getQuantityFromCartItem(cartItem);
-      // 실제 HTML 구조에 맞는 클래스명을 사용하여 가격 요소를 선택
       const priceElems = cartItem.querySelectorAll('.cart-item-price');
 
       priceElems.forEach((elem) => {

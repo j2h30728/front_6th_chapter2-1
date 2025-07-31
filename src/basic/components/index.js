@@ -1,4 +1,3 @@
-// 🧩 컴포넌트 exports
 export { createBulkDiscountHTML } from './BulkDiscount.js';
 export { createCartItems } from './CartItems.js';
 export { createHeader } from './Header.js';

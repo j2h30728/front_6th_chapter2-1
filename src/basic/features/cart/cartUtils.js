@@ -1,5 +1,3 @@
-// 🎯 장바구니 도메인 유틸리티 객체
-
 // 상품 관련 함수들 import (순환 참조 방지)
 import { ProductUtils } from '../product/productUtils.js';
 

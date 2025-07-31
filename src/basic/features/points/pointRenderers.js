@@ -1,9 +1,7 @@
-// 🎯 포인트 렌더링 로직 모듈
 import { calculateTotalPoints, getCartState, getCurrentTuesdayStatus } from '../calculations/cartCalculations.js';
 import { renderPointsDisplay } from '../ui/uiUpdaters.js';
 import { pointService } from './index.js';
 
-// 🎨 UI 관련 상수
 const UI_STYLES = {
   HIDDEN: 'none',
   VISIBLE: 'block',

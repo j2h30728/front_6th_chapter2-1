@@ -1,4 +1,3 @@
-// 🏪 이벤트 등록 모듈
 import { getElement } from '../../utils/domUtils.js';
 import { eventHandlers } from './eventHandlers.js';
 import { eventSystem } from './eventSystem.js';

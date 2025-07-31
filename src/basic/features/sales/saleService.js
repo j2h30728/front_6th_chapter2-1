@@ -1,4 +1,3 @@
-// 🏪 세일 서비스
 import { DISCOUNT_POLICIES, TIMER_SETTINGS } from '../../constants/index.js';
 
 /**
@@ -24,7 +23,6 @@ export const saleService = {
             randomProduct.originalPrice * (1 - DISCOUNT_POLICIES.SPECIAL_DISCOUNTS.LIGHTNING_SALE.RATE)
           );
 
-          // 가격 변경
           productStore.dispatch({
             type: 'SET_PRODUCT_PRICE',
             payload: {
@@ -33,7 +31,6 @@ export const saleService = {
             },
           });
 
-          // 상태 변경 (번개세일)
           productStore.dispatch({
             type: 'SET_SALE_STATUS',
             payload: {
@@ -81,7 +78,6 @@ export const saleService = {
               recommendedProduct.price * (1 - DISCOUNT_POLICIES.SPECIAL_DISCOUNTS.RECOMMENDED_SALE.RATE)
             );
 
-            // 가격 변경
             productStore.dispatch({
               type: 'SET_PRODUCT_PRICE',
               payload: {
@@ -90,7 +86,6 @@ export const saleService = {
               },
             });
 
-            // 상태 변경 (추천할인)
             productStore.dispatch({
               type: 'SET_SALE_STATUS',
               payload: {

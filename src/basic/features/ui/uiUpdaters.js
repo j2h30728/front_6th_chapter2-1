@@ -1,4 +1,3 @@
-// 🎨 UI 업데이트 로직 모듈
 import {
   createBulkDiscountHTML,
   createItemDiscountHTML,
@@ -10,7 +9,6 @@ import {
 import { CartUtils } from '../cart/cartUtils.js';
 import { ProductUtils } from '../product/productUtils.js';
 
-// 🎨 UI 관련 상수
 const UI_STYLES = {
   HIDDEN: 'none',
   VISIBLE: 'block',

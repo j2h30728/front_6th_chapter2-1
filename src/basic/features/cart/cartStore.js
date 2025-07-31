@@ -1,8 +1,6 @@
-// 🛒 장바구니 도메인 Store
 import { UI_CONSTANTS } from '../../constants/index.js';
 import createStore from '../../utils/createStore.js';
 
-// 🛒 장바구니 리듀서
 const cartReducer = (state, action) => {
   switch (action.type) {
     case 'SET_ITEM_COUNT':
@@ -29,7 +27,6 @@ const cartReducer = (state, action) => {
   }
 };
 
-// 🛒 장바구니 Store 인스턴스
 const cartStore = createStore(cartReducer, {
   itemCount: UI_CONSTANTS.DEFAULT_ITEM_COUNT,
   totalAmount: UI_CONSTANTS.DEFAULT_TOTAL_AMOUNT,

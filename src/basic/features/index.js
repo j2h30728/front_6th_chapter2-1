@@ -1,4 +1,3 @@
-// 🏪 기능 모듈 exports
 export * from './calculations/cartCalculations.js';
 export * from './cart/index.js';
 export * from './data/index.js';

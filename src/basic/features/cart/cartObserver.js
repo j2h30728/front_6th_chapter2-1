@@ -1,4 +1,3 @@
-// 🛒 장바구니 도메인 옵저버
 import createObserver from '../../utils/createObserver.js';
 import { formatPrice } from '../../utils/dataUtils.js';
 import { getElement, setTextContent } from '../../utils/domUtils.js';
