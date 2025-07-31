@@ -464,20 +464,63 @@ const pointCalculator = {
   },
 };
 
+// 🏪 이벤트 시스템
+const eventSystem = {
+  // 이벤트 타입 상수
+  EVENT_TYPES: {
+    CART_ADD_ITEM: 'CART_ADD_ITEM',
+    CART_REMOVE_ITEM: 'CART_REMOVE_ITEM',
+    CART_UPDATE_QUANTITY: 'CART_UPDATE_QUANTITY',
+    MANUAL_TOGGLE: 'MANUAL_TOGGLE',
+    MANUAL_CLOSE: 'MANUAL_CLOSE',
+    PRODUCT_SELECT: 'PRODUCT_SELECT',
+    LIGHTNING_SALE: 'LIGHTNING_SALE',
+    RECOMMENDED_SALE: 'RECOMMENDED_SALE',
+  },
+
+  // 이벤트 리스너 저장소
+  listeners: new Map(),
+
+  // 이벤트 등록
+  on: (eventType, callback) => {
+    if (!eventSystem.listeners.has(eventType)) {
+      eventSystem.listeners.set(eventType, []);
+    }
+    eventSystem.listeners.get(eventType).push(callback);
+  },
+
+  // 이벤트 발생
+  emit: (eventType, data) => {
+    const callbacks = eventSystem.listeners.get(eventType) || [];
+    callbacks.forEach((callback) => callback(data));
+  },
+
+  // 이벤트 리스너 제거
+  off: (eventType, callback) => {
+    const callbacks = eventSystem.listeners.get(eventType) || [];
+    const index = callbacks.indexOf(callback);
+    if (index > -1) {
+      callbacks.splice(index, 1);
+    }
+  },
+
+  // 모든 이벤트 리스너 제거
+  clear: () => {
+    eventSystem.listeners.clear();
+  },
+};
+
 // 🏪 이벤트 핸들러 모듈
 const eventHandlers = {
   // 매뉴얼 토글 이벤트 핸들러
   handleManualToggle: () => {
-    uiStore.dispatch({ type: 'TOGGLE_MANUAL_OVERLAY' });
-    const isVisible = uiStore.getState().isManualOverlayVisible;
-    uiRenderer.renderManualOverlay(isVisible);
+    eventSystem.emit(eventSystem.EVENT_TYPES.MANUAL_TOGGLE);
   },
 
   // 매뉴얼 오버레이 배경 클릭 이벤트 핸들러
   handleManualOverlayClick: (event) => {
     if (event.target === event.currentTarget) {
-      uiStore.dispatch({ type: 'SET_MANUAL_OVERLAY_VISIBLE', payload: false });
-      uiRenderer.renderManualOverlay(false);
+      eventSystem.emit(eventSystem.EVENT_TYPES.MANUAL_CLOSE);
     }
   },
 
@@ -493,31 +536,11 @@ const eventHandlers = {
 
     const itemToAdd = utils.findProductById(selItem);
     if (itemToAdd && itemToAdd.q > 0) {
-      const item = utils.getElement(itemToAdd.id);
-      if (item) {
-        // 기존 아이템 수량 증가
-        const currentQty = utils.getQuantityFromCartItem(item);
-        const newQty = currentQty + 1;
-        if (newQty <= itemToAdd.q + currentQty) {
-          utils.setQuantityToCartItem(item, newQty);
-          productStore.dispatch({
-            type: 'DECREASE_STOCK',
-            payload: { productId: itemToAdd.id, quantity: 1 },
-          });
-        } else {
-          alert('재고가 부족합니다.');
-        }
-      } else {
-        // 새 아이템 추가
-        const cartDisp = utils.getElement('cart-items');
-        cartDisp.insertAdjacentHTML('beforeend', createCartItemHTML(itemToAdd));
-        productStore.dispatch({
-          type: 'DECREASE_STOCK',
-          payload: { productId: itemToAdd.id, quantity: 1 },
-        });
-      }
-      handleCalculateCartStuff();
-      cartStore.dispatch({ type: 'SET_LAST_SELECTED', payload: selItem });
+      eventSystem.emit(eventSystem.EVENT_TYPES.CART_ADD_ITEM, {
+        productId: itemToAdd.id,
+        quantity: 1,
+        product: itemToAdd,
+      });
     }
   },
 
@@ -576,6 +599,49 @@ const eventHandlers = {
     manualOverlay.onclick = eventHandlers.handleManualOverlayClick;
     addBtn.addEventListener('click', eventHandlers.handleAddToCart);
     cartDisp.addEventListener('click', eventHandlers.handleCartItemClick);
+
+    // 이벤트 시스템 리스너 등록
+    eventSystem.on(eventSystem.EVENT_TYPES.MANUAL_TOGGLE, () => {
+      uiStore.dispatch({ type: 'TOGGLE_MANUAL_OVERLAY' });
+      const isVisible = uiStore.getState().isManualOverlayVisible;
+      uiRenderer.renderManualOverlay(isVisible);
+    });
+
+    eventSystem.on(eventSystem.EVENT_TYPES.MANUAL_CLOSE, () => {
+      uiStore.dispatch({ type: 'SET_MANUAL_OVERLAY_VISIBLE', payload: false });
+      uiRenderer.renderManualOverlay(false);
+    });
+
+    eventSystem.on(eventSystem.EVENT_TYPES.CART_ADD_ITEM, (data) => {
+      const { productId, quantity, product } = data;
+      const item = utils.getElement(productId);
+
+      if (item) {
+        // 기존 아이템 수량 증가
+        const currentQty = utils.getQuantityFromCartItem(item);
+        const newQty = currentQty + quantity;
+        if (newQty <= product.q + currentQty) {
+          utils.setQuantityToCartItem(item, newQty);
+          productStore.dispatch({
+            type: 'DECREASE_STOCK',
+            payload: { productId, quantity },
+          });
+        } else {
+          alert('재고가 부족합니다.');
+        }
+      } else {
+        // 새 아이템 추가
+        const cartContainer = utils.getElement('cart-items');
+        cartContainer.insertAdjacentHTML('beforeend', createCartItemHTML(product));
+        productStore.dispatch({
+          type: 'DECREASE_STOCK',
+          payload: { productId, quantity },
+        });
+      }
+
+      handleCalculateCartStuff();
+      cartStore.dispatch({ type: 'SET_LAST_SELECTED', payload: productId });
+    });
   },
 };
 
