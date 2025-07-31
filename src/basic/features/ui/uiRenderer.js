@@ -8,9 +8,9 @@ const uiRenderer = {
     setTextContent('item-count', `🛍️ ${totalItems} items in cart`);
 
     const totalDiv = querySelector(getElement('cart-total'), '.cart-total-amount');
-    if (totalDiv) {
-      totalDiv.textContent = `₩${finalTotal.toLocaleString()}`;
-    }
+    if (!totalDiv) return;
+
+    totalDiv.textContent = `₩${finalTotal.toLocaleString()}`;
   },
 
   renderPointsDisplay: (totalPoints) => {
@@ -21,12 +21,12 @@ const uiRenderer = {
 
   renderTuesdaySpecial: (isTuesday, finalTotal) => {
     const tuesdaySpecial = getElement('tuesday-special');
-    if (tuesdaySpecial) {
-      if (isTuesday && finalTotal > 0) {
-        tuesdaySpecial.classList.remove('hidden');
-      } else {
-        tuesdaySpecial.classList.add('hidden');
-      }
+    if (!tuesdaySpecial) return;
+
+    if (isTuesday && finalTotal > 0) {
+      tuesdaySpecial.classList.remove('hidden');
+    } else {
+      tuesdaySpecial.classList.add('hidden');
     }
   },
 
@@ -41,6 +41,8 @@ const uiRenderer = {
 
   renderDiscountInfo: (totalDiscountRate, savedAmount) => {
     const discountInfoDiv = getElement('discount-info');
+    if (!discountInfoDiv) return;
+
     if (totalDiscountRate > 0 && savedAmount > 0) {
       discountInfoDiv.innerHTML = /*html*/ `
         <div class="bg-green-500/20 rounded-lg p-3">
