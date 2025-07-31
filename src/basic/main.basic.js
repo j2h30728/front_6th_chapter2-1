@@ -1,6 +1,75 @@
 import createObserver from './utils/createObserver.js';
 import createStore from './utils/createStore.js';
 
+// 🏪 상품 ID 상수 - 일관된 네이밍으로 통일
+const PRODUCT_IDS = {
+  KEYBOARD: 'p1',
+  MOUSE: 'p2',
+  MONITOR_ARM: 'p3',
+  LAPTOP_POUCH: 'p4',
+  SPEAKER: 'p5',
+};
+
+// 🏪 할인 정책 설정
+const DISCOUNT_POLICIES = {
+  // 개별 상품 할인율 (10개 이상 구매 시)
+  INDIVIDUAL_DISCOUNTS: {
+    [PRODUCT_IDS.KEYBOARD]: 0.1, // 10%
+    [PRODUCT_IDS.MOUSE]: 0.15, // 15%
+    [PRODUCT_IDS.MONITOR_ARM]: 0.2, // 20%
+    [PRODUCT_IDS.LAPTOP_POUCH]: 0.05, // 5%
+    [PRODUCT_IDS.SPEAKER]: 0.25, // 25%
+  },
+
+  // 대량 구매 할인
+  BULK_DISCOUNT: {
+    THRESHOLD: 30, // 30개 이상
+    RATE: 0.25, // 25%
+  },
+
+  // 특별 할인
+  SPECIAL_DISCOUNTS: {
+    TUESDAY: {
+      RATE: 0.1, // 10%
+      DAY_OF_WEEK: 2, // 화요일 (0=일요일, 1=월요일, 2=화요일)
+    },
+    LIGHTNING_SALE: {
+      RATE: 0.2, // 20%
+    },
+    RECOMMENDED_SALE: {
+      RATE: 0.05, // 5%
+    },
+  },
+};
+
+// 🏪 포인트 정책 설정
+const POINT_POLICIES = {
+  // 기본 포인트 적립률
+  BASE_RATE: 0.001, // 0.1% (1000원당 1포인트)
+
+  // 화요일 보너스
+  TUESDAY_MULTIPLIER: 2, // 2배
+
+  // 세트 보너스
+  SET_BONUSES: {
+    KEYBOARD_MOUSE: 50, // 키보드+마우스 세트
+    FULL_SET: 100, // 풀세트 (키보드+마우스+모니터암)
+  },
+
+  // 수량 보너스
+  QUANTITY_BONUSES: {
+    [10]: 20, // 10개 이상 +20p
+    [20]: 50, // 20개 이상 +50p
+    [30]: 100, // 30개 이상 +100p
+  },
+};
+
+// 🏪 재고 관리 설정
+const STOCK_POLICIES = {
+  LOW_STOCK_THRESHOLD: 5, // 5개 미만 시 재고 부족 표시
+  OUT_OF_STOCK: 0, // 0개 시 품절
+};
+
 // 🏪 Cart Store - 장바구니 상태 관리
 const cartReducer = (state, action) => {
   switch (action.type) {
@@ -28,12 +97,6 @@ const cartStore = createStore(cartReducer, {
   totalAmt: 0,
   lastSel: null,
 });
-
-const PRODUCT_ONE = 'p1';
-const p2 = 'p2';
-const product_3 = 'p3';
-const p4 = 'p4';
-const PRODUCT_5 = `p5`;
 
 // 🏪 Product Store - 상품 재고 및 상태 관리
 const productReducer = (state, action) => {
@@ -130,7 +193,7 @@ const productReducer = (state, action) => {
 const productStore = createStore(productReducer, {
   products: [
     {
-      id: PRODUCT_ONE,
+      id: PRODUCT_IDS.KEYBOARD,
       name: '버그 없애는 키보드',
       val: 10000,
       originalVal: 10000,
@@ -139,7 +202,7 @@ const productStore = createStore(productReducer, {
       suggestSale: false,
     },
     {
-      id: p2,
+      id: PRODUCT_IDS.MOUSE,
       name: '생산성 폭발 마우스',
       val: 20000,
       originalVal: 20000,
@@ -148,7 +211,7 @@ const productStore = createStore(productReducer, {
       suggestSale: false,
     },
     {
-      id: product_3,
+      id: PRODUCT_IDS.MONITOR_ARM,
       name: '거북목 탈출 모니터암',
       val: 30000,
       originalVal: 30000,
@@ -157,7 +220,7 @@ const productStore = createStore(productReducer, {
       suggestSale: false,
     },
     {
-      id: p4,
+      id: PRODUCT_IDS.LAPTOP_POUCH,
       name: '에러 방지 노트북 파우치',
       val: 15000,
       originalVal: 15000,
@@ -166,7 +229,7 @@ const productStore = createStore(productReducer, {
       suggestSale: false,
     },
     {
-      id: PRODUCT_5,
+      id: PRODUCT_IDS.SPEAKER,
       name: `코딩할 때 듣는 Lo-Fi 스피커`,
       val: 25000,
       originalVal: 25000,
@@ -683,15 +746,7 @@ const calculateCartItems = (cartItems) => {
 
     // 10개 이상 구매 시 할인 적용
     if (quantity >= 10) {
-      const discountRates = {
-        [PRODUCT_ONE]: 0.1,
-        [p2]: 0.15,
-        [product_3]: 0.2,
-        [p4]: 0.05,
-        [PRODUCT_5]: 0.25,
-      };
-
-      const discount = discountRates[curItem.id] || 0;
+      const discount = DISCOUNT_POLICIES.INDIVIDUAL_DISCOUNTS[curItem.id] || 0;
       if (discount > 0) {
         itemDiscounts.push({ name: curItem.name, discount: discount * 100 });
       }
@@ -702,10 +757,11 @@ const calculateCartItems = (cartItems) => {
 };
 
 const calculateFinalTotal = (subtotal, itemDiscounts, totalItems) => {
-  const bulkDiscount = totalItems >= 30 ? 0.25 : 0;
+  const bulkDiscount =
+    totalItems >= DISCOUNT_POLICIES.BULK_DISCOUNT.THRESHOLD ? DISCOUNT_POLICIES.BULK_DISCOUNT.RATE : 0;
   const today = new Date();
-  const isTuesday = today.getDay() === 2;
-  const tuesdayDiscount = isTuesday && subtotal > 0 ? 0.1 : 0;
+  const isTuesday = today.getDay() === DISCOUNT_POLICIES.SPECIAL_DISCOUNTS.TUESDAY.DAY_OF_WEEK;
+  const tuesdayDiscount = isTuesday && subtotal > 0 ? DISCOUNT_POLICIES.SPECIAL_DISCOUNTS.TUESDAY.RATE : 0;
 
   let finalTotal = subtotal;
 
@@ -730,8 +786,8 @@ const calculateFinalTotal = (subtotal, itemDiscounts, totalItems) => {
 };
 
 const calculateTotalPoints = (finalTotal, cartItems, totalItems, isTuesday) => {
-  const basePoints = Math.floor(finalTotal / 1000);
-  const tuesdayPoints = isTuesday ? basePoints * 2 : basePoints;
+  const basePoints = Math.floor(finalTotal * POINT_POLICIES.BASE_RATE);
+  const tuesdayPoints = isTuesday ? basePoints * POINT_POLICIES.TUESDAY_MULTIPLIER : basePoints;
 
   // 세트 보너스 계산
   const productTypes = {
@@ -744,20 +800,27 @@ const calculateTotalPoints = (finalTotal, cartItems, totalItems, isTuesday) => {
     const product = productStore.getState().products.find((item) => item.id === cartItem.id);
     if (!product) return;
 
-    if (product.id === PRODUCT_ONE) productTypes.hasKeyboard = true;
-    else if (product.id === p2) productTypes.hasMouse = true;
-    else if (product.id === product_3) productTypes.hasMonitorArm = true;
+    if (product.id === PRODUCT_IDS.KEYBOARD) productTypes.hasKeyboard = true;
+    else if (product.id === PRODUCT_IDS.MOUSE) productTypes.hasMouse = true;
+    else if (product.id === PRODUCT_IDS.MONITOR_ARM) productTypes.hasMonitorArm = true;
   });
 
   let setBonus = 0;
-  if (productTypes.hasKeyboard && productTypes.hasMouse) setBonus += 50;
-  if (productTypes.hasKeyboard && productTypes.hasMouse && productTypes.hasMonitorArm) setBonus += 100;
+  if (productTypes.hasKeyboard && productTypes.hasMouse) setBonus += POINT_POLICIES.SET_BONUSES.KEYBOARD_MOUSE;
+  if (productTypes.hasKeyboard && productTypes.hasMouse && productTypes.hasMonitorArm)
+    setBonus += POINT_POLICIES.SET_BONUSES.FULL_SET;
 
   // 수량 보너스 계산
   let quantityBonus = 0;
-  if (totalItems >= 30) quantityBonus = 100;
-  else if (totalItems >= 20) quantityBonus = 50;
-  else if (totalItems >= 10) quantityBonus = 20;
+  const quantityThresholds = Object.keys(POINT_POLICIES.QUANTITY_BONUSES)
+    .map(Number)
+    .sort((a, b) => b - a);
+  for (const threshold of quantityThresholds) {
+    if (totalItems >= threshold) {
+      quantityBonus = POINT_POLICIES.QUANTITY_BONUSES[threshold];
+      break;
+    }
+  }
 
   return tuesdayPoints + setBonus + quantityBonus;
 };
@@ -774,9 +837,9 @@ const calculateSetBonus = (cartItems) => {
     const product = productStore.getState().products.find((item) => item.id === cartItem.id);
     if (!product) return;
 
-    if (product.id === PRODUCT_ONE) productTypes.hasKeyboard = true;
-    else if (product.id === p2) productTypes.hasMouse = true;
-    else if (product.id === product_3) productTypes.hasMonitorArm = true;
+    if (product.id === PRODUCT_IDS.KEYBOARD) productTypes.hasKeyboard = true;
+    else if (product.id === PRODUCT_IDS.MOUSE) productTypes.hasMouse = true;
+    else if (product.id === PRODUCT_IDS.MONITOR_ARM) productTypes.hasMonitorArm = true;
   });
 
   let bonus = 0;
@@ -892,8 +955,8 @@ const updateStockMessages = () => {
   let stockMsg = '';
   for (let stockIdx = 0; stockIdx < productStore.getState().products.length; stockIdx++) {
     const item = productStore.getState().products[stockIdx];
-    if (item.q < 5) {
-      if (item.q > 0) {
+    if (item.q < STOCK_POLICIES.LOW_STOCK_THRESHOLD) {
+      if (item.q > STOCK_POLICIES.OUT_OF_STOCK) {
         stockMsg = stockMsg + item.name + ': 재고 부족 (' + item.q + '개 남음)\n';
       } else {
         stockMsg = stockMsg + item.name + ': 품절\n';
