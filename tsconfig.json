@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "ES6",
-    "lib": ["es6", "dom", "dom.iterable", "scripthost"],
+    "target": "ES2017",
+    "lib": ["es2017", "dom", "dom.iterable", "scripthost"],
     "jsx": "react-jsx",
     "rootDir": "./",
     "module": "es2015", // module이 node에서 동작해야하는 경우(CommonJS인 경우)에는 moduleResolution의 값은 "node"로 자동 추론된다.
