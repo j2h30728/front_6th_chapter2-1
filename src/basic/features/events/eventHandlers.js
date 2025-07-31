@@ -1,7 +1,10 @@
 import { getElement } from '../../utils/domUtils.js';
+import { cartActions } from '../cart/cartStore.js';
 import { CartUtils } from '../cart/cartUtils.js';
+import { productActions } from '../product/productStore.js';
 import { ProductUtils } from '../product/productUtils.js';
 import uiRenderer from '../ui/uiRenderer.js';
+import { uiActions } from '../ui/uiStore.js';
 
 export const cartEventHandlers = {
   handleAddToCart: (handleCalculateCartStuff, cartStore, productStore) => {
@@ -29,7 +32,7 @@ export const cartEventHandlers = {
     }
 
     handleCalculateCartStuff();
-    cartStore.dispatch({ type: 'SET_LAST_SELECTED_PRODUCT_ID', payload: productToAdd.id });
+    cartStore.dispatch(cartActions.setLastSelectedProductId(productToAdd.id));
   },
 
   handleCartItemClick: (event, target, handleCalculateCartStuff, onUpdateSelectOptions, cartStore, productStore) => {
@@ -61,19 +64,13 @@ const handleExistingCartItem = (existingCartItem, productToAdd, productStore) =>
   }
 
   CartUtils.setQuantityToCartItem(existingCartItem, newQuantity);
-  productStore.dispatch({
-    type: 'DECREASE_STOCK',
-    payload: { productId: productToAdd.id, quantity: 1 },
-  });
+  productStore.dispatch(productActions.decreaseStock(productToAdd.id, 1));
 };
 
 // 새 장바구니 아이템 추가 함수
 const handleNewCartItem = (cartItemsContainer, productToAdd, productStore) => {
   cartItemsContainer.insertAdjacentHTML('beforeend', CartUtils.createCartItemHTML(productToAdd));
-  productStore.dispatch({
-    type: 'DECREASE_STOCK',
-    payload: { productId: productToAdd.id, quantity: 1 },
-  });
+  productStore.dispatch(productActions.decreaseStock(productToAdd.id, 1));
 };
 
 // 수량 변경 처리 함수
@@ -92,17 +89,11 @@ const handleQuantityChange = (event, target, handleCalculateCartStuff, onUpdateS
 
   if (newQuantity > 0 && newQuantity <= product.stockQuantity + currentQuantity) {
     CartUtils.setQuantityToCartItem(cartItemElement, newQuantity);
-    productStore.dispatch({
-      type: 'DECREASE_STOCK',
-      payload: { productId, quantity: quantityChange },
-    });
+    productStore.dispatch(productActions.decreaseStock(productId, quantityChange));
     handleCalculateCartStuff();
     onUpdateSelectOptions();
   } else if (newQuantity <= 0) {
-    productStore.dispatch({
-      type: 'INCREASE_STOCK',
-      payload: { productId, quantity: currentQuantity },
-    });
+    productStore.dispatch(productActions.increaseStock(productId, currentQuantity));
     cartItemElement.remove();
     handleCalculateCartStuff();
     onUpdateSelectOptions();
@@ -119,10 +110,7 @@ const handleRemoveItem = (target, handleCalculateCartStuff, onUpdateSelectOption
   const productId = cartItemElement.id;
   const currentQuantity = CartUtils.getQuantityFromCartItem(cartItemElement);
 
-  productStore.dispatch({
-    type: 'INCREASE_STOCK',
-    payload: { productId, quantity: currentQuantity },
-  });
+  productStore.dispatch(productActions.increaseStock(productId, currentQuantity));
   cartItemElement.remove();
   handleCalculateCartStuff();
   onUpdateSelectOptions();
@@ -130,20 +118,20 @@ const handleRemoveItem = (target, handleCalculateCartStuff, onUpdateSelectOption
 
 export const manualEventHandlers = {
   handleManualToggle: (uiStore) => {
-    uiStore.dispatch({ type: 'TOGGLE_MANUAL_OVERLAY' });
+    uiStore.dispatch(uiActions.toggleManualOverlay());
     const isVisible = uiStore.getState().isManualOverlayVisible;
     uiRenderer.renderManualOverlay(isVisible);
   },
 
   handleManualOverlayClick: (event, uiStore) => {
     if (event.target.id === 'manual-overlay') {
-      uiStore.dispatch({ type: 'SET_MANUAL_OVERLAY_VISIBLE', payload: false });
+      uiStore.dispatch(uiActions.setManualOverlayVisible(false));
       uiRenderer.renderManualOverlay(false);
     }
   },
 
   handleManualClose: (uiStore) => {
-    uiStore.dispatch({ type: 'SET_MANUAL_OVERLAY_VISIBLE', payload: false });
+    uiStore.dispatch(uiActions.setManualOverlayVisible(false));
     uiRenderer.renderManualOverlay(false);
   },
 };
