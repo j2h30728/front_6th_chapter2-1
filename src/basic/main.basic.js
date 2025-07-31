@@ -22,6 +22,7 @@ import {
   createInitialProductState,
   createProductStore,
   discountService,
+  optionService,
   pointService,
   ProductUtils,
   registerEventListeners,
@@ -76,64 +77,6 @@ function main() {
 
   // 🏪 세일 서비스 시작
   saleService.startAllSales(cartStore, productStore, onUpdateSelectOptions, doUpdatePricesInCart);
-}
-
-function onUpdateSelectOptions() {
-  const sel = document.getElementById('product-select');
-
-  // 전체 재고 계산
-  const totalStock = productStore.getState().products.reduce((total, product) => total + product.q, 0);
-
-  // 상품을 option HTML로 변환하는 함수
-  const createOptionHTML = (item) => {
-    const getItemSaleIcon = () => ProductUtils.getSaleIcon(item);
-
-    const getOptionClass = () => {
-      if (item.q === 0) return 'text-gray-400';
-      if (item.onSale && item.suggestSale) return 'text-purple-600 font-bold';
-      if (item.onSale) return 'text-red-500 font-bold';
-      if (item.suggestSale) return 'text-blue-500 font-bold';
-      return '';
-    };
-
-    const getOptionText = () => {
-      const icon = getItemSaleIcon();
-
-      if (item.q === 0) {
-        return `${item.name} - ${item.val}원 (품절)`;
-      }
-
-      if (item.onSale && item.suggestSale) {
-        return `${icon}${item.name} - ${item.originalVal}원 → ${item.val}원 (25% SUPER SALE!)`;
-      }
-
-      if (item.onSale) {
-        return `${icon}${item.name} - ${item.originalVal}원 → ${item.val}원 (20% SALE!)`;
-      }
-
-      if (item.suggestSale) {
-        return `${icon}${item.name} - ${item.originalVal}원 → ${item.val}원 (5% 추천할인!)`;
-      }
-
-      return `${item.name} - ${item.val}원`;
-    };
-
-    return `
-      <option
-        value="${item.id}"
-        class="${getOptionClass()}"
-        ${item.q === 0 ? 'disabled' : ''}
-      >
-        ${getOptionText()}
-      </option>
-    `;
-  };
-
-  // 템플릿 리터럴로 옵션들 생성
-  sel.innerHTML = productStore.getState().products.map(createOptionHTML).join('');
-
-  // 재고 상태에 따른 스타일 적용
-  sel.style.borderColor = totalStock < UI_CONSTANTS.TOTAL_STOCK_WARNING_THRESHOLD ? 'orange' : '';
 }
 
 // 📦 재고 상태 헬퍼 함수 (도메인 함수 사용)
@@ -327,6 +270,11 @@ function doUpdatePricesInCart() {
   // 전체 계산 다시 실행
   handleCalculateCartStuff();
 }
+
+// 🏪 옵션 업데이트 함수
+const onUpdateSelectOptions = () => {
+  optionService.updateSelectOptions(productStore, ProductUtils, UI_CONSTANTS);
+};
 
 //main 실행
 main();

@@ -4,6 +4,7 @@ export * from './data/index.js';
 export * from './discount/index.js';
 export * from './events/index.js';
 export { setupObservers } from './observerFactory.js';
+export * from './options/index.js';
 export * from './points/index.js';
 export * from './product/index.js';
 export * from './sales/index.js';
