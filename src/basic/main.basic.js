@@ -22,24 +22,12 @@ import {
   UI_CONSTANTS,
 } from './constants/index.js';
 // 🛠️ 순수 유틸리티 함수들 import
-import { createCartItemHTML, getQuantityFromCartItem, setQuantityToCartItem } from './features/cart/cartUtils.js';
-// 🎯 기능별 함수들 import
-import { createStockMessage, findProductById, getPriceHTML, getSaleIcon } from './features/product/productUtils.js';
+import { CartUtils } from './features/cart/cartUtils.js';
+import { ProductUtils } from './features/product/productUtils.js';
 import createObserver from './utils/createObserver.js';
 import createStore from './utils/createStore.js';
 import { formatNumber, formatPrice, safeParseInt, when, whenValue } from './utils/dataUtils.js';
 import { getElement, querySelector, setInnerHTML, setStyle, setTextContent } from './utils/domUtils.js';
-
-// 🎯 도메인별 함수들
-const domainUtils = {
-  getQuantityFromCartItem,
-  setQuantityToCartItem,
-  findProductById: (productId) => findProductById(productId, productStore.getState().products),
-  getSaleIcon,
-  getPriceHTML,
-  createStockMessage,
-  createCartItemHTML,
-};
 
 // 🏪 UI 렌더링 모듈 (React 스타일)
 const uiRenderer = {
@@ -98,7 +86,7 @@ const uiRenderer = {
 
   renderCartItemStyles: (cartItems) => {
     Array.from(cartItems).forEach((cartItem) => {
-      const quantity = domainUtils.getQuantityFromCartItem(cartItem);
+      const quantity = CartUtils.getQuantityFromCartItem(cartItem);
       const priceElems = cartItem.querySelectorAll('.text-lg, .text-xs');
 
       priceElems.forEach((elem) => {
@@ -198,8 +186,8 @@ const discountCalculator = {
   createDiscountInfo: (cartItems) => {
     return Array.from(cartItems)
       .map((cartItem) => {
-        const curItem = domainUtils.findProductById(cartItem.id);
-        const quantity = domainUtils.getQuantityFromCartItem(cartItem);
+        const curItem = ProductUtils.findProductById(cartItem.id, productStore.getState().products);
+        const quantity = CartUtils.getQuantityFromCartItem(cartItem);
         const discount = discountCalculator.calculateIndividualDiscount(curItem.id, quantity);
 
         return discount > 0 ? { name: curItem.name, discount: discount * 100 } : null;
@@ -223,7 +211,7 @@ const pointCalculator = {
   // 세트 보너스 계산
   calculateSetBonus: (cartItems) => {
     const productTypes = cartItems
-      .map((cartItem) => domainUtils.findProductById(cartItem.id))
+      .map((cartItem) => ProductUtils.findProductById(cartItem.id, productStore.getState().products))
       .filter(Boolean)
       .reduce(
         (types, product) => {
@@ -377,7 +365,7 @@ const eventHandlers = {
       return;
     }
 
-    const itemToAdd = domainUtils.findProductById(selItem);
+    const itemToAdd = ProductUtils.findProductById(selItem, productStore.getState().products);
     if (itemToAdd && itemToAdd.q > 0) {
       eventSystem.emit(eventSystem.EVENT_TYPES.CART_ADD_ITEM, {
         productId: itemToAdd.id,
@@ -393,16 +381,16 @@ const eventHandlers = {
     if (tgt.classList.contains('quantity-change') || tgt.classList.contains('remove-item')) {
       const prodId = tgt.dataset.productId;
       const itemElem = getElement(prodId);
-      const prod = domainUtils.findProductById(prodId);
+      const prod = ProductUtils.findProductById(prodId, productStore.getState().products);
 
       if (tgt.classList.contains('quantity-change')) {
         // 수량 변경
         const qtyChange = safeParseInt(tgt.dataset.change);
-        const currentQty = domainUtils.getQuantityFromCartItem(itemElem);
+        const currentQty = CartUtils.getQuantityFromCartItem(itemElem);
         const newQty = currentQty + qtyChange;
 
         if (newQty > 0 && newQty <= prod.q + currentQty) {
-          domainUtils.setQuantityToCartItem(itemElem, newQty);
+          CartUtils.setQuantityToCartItem(itemElem, newQty);
           productStore.dispatch({
             type: 'DECREASE_STOCK',
             payload: { productId: prodId, quantity: qtyChange },
@@ -418,7 +406,7 @@ const eventHandlers = {
         }
       } else if (tgt.classList.contains('remove-item')) {
         // 아이템 제거
-        const remQty = domainUtils.getQuantityFromCartItem(itemElem);
+        const remQty = CartUtils.getQuantityFromCartItem(itemElem);
         productStore.dispatch({
           type: 'INCREASE_STOCK',
           payload: { productId: prodId, quantity: remQty },
@@ -461,10 +449,10 @@ const eventHandlers = {
 
       if (item) {
         // 기존 아이템 수량 증가
-        const currentQty = domainUtils.getQuantityFromCartItem(item);
+        const currentQty = CartUtils.getQuantityFromCartItem(item);
         const newQty = currentQty + quantity;
         if (newQty <= product.q + currentQty) {
-          domainUtils.setQuantityToCartItem(item, newQty);
+          CartUtils.setQuantityToCartItem(item, newQty);
           productStore.dispatch({
             type: 'DECREASE_STOCK',
             payload: { productId, quantity },
@@ -475,7 +463,7 @@ const eventHandlers = {
       } else {
         // 새 아이템 추가
         const cartContainer = getElement('cart-items');
-        cartContainer.insertAdjacentHTML('beforeend', domainUtils.createCartItemHTML(product));
+        cartContainer.insertAdjacentHTML('beforeend', CartUtils.createCartItemHTML(product));
         productStore.dispatch({
           type: 'DECREASE_STOCK',
           payload: { productId, quantity },
@@ -834,7 +822,7 @@ function onUpdateSelectOptions() {
 
   // 상품을 option HTML로 변환하는 함수
   const createOptionHTML = (item) => {
-    const getItemSaleIcon = () => domainUtils.getSaleIcon(item);
+    const getItemSaleIcon = () => ProductUtils.getSaleIcon(item);
 
     const getOptionClass = () => {
       if (item.q === 0) return 'text-gray-400';
@@ -889,8 +877,8 @@ function onUpdateSelectOptions() {
 const calculateCartItems = (cartItems) => {
   const cartData = Array.from(cartItems).reduce(
     (acc, cartItem) => {
-      const curItem = domainUtils.findProductById(cartItem.id);
-      const quantity = domainUtils.getQuantityFromCartItem(cartItem);
+      const curItem = ProductUtils.findProductById(cartItem.id, productStore.getState().products);
+      const quantity = CartUtils.getQuantityFromCartItem(cartItem);
       const itemTotal = curItem.val * quantity;
 
       return {
@@ -933,8 +921,8 @@ const updateSummaryDetails = (cartItems, subtotal, itemDiscounts, bulkDiscount, 
   }
 
   const summaryItems = Array.from(cartItems).map((cartItem) => {
-    const curItem = domainUtils.findProductById(cartItem.id);
-    const quantity = domainUtils.getQuantityFromCartItem(cartItem);
+    const curItem = ProductUtils.findProductById(cartItem.id, productStore.getState().products);
+    const quantity = CartUtils.getQuantityFromCartItem(cartItem);
     return createSummaryItemHTML(curItem, quantity);
   });
 
@@ -967,7 +955,7 @@ const updateStockMessages = () => {
   const stockMessages = productStore
     .getState()
     .products.filter((item) => item.q < STOCK_POLICIES.LOW_STOCK_THRESHOLD)
-    .map(domainUtils.createStockMessage)
+    .map(ProductUtils.createStockMessage)
     .filter(Boolean);
 
   uiRenderer.renderStockMessages(stockMessages);
@@ -1084,10 +1072,10 @@ const updateCartItemPrice = (cartItem, product) => {
   const nameDiv = cartItem.querySelector('h3');
 
   // 가격 HTML 생성
-  const priceHTML = domainUtils.getPriceHTML(product);
+  const priceHTML = ProductUtils.getPriceHTML(product);
 
   // 이름에 아이콘 추가
-  const icon = domainUtils.getSaleIcon(product);
+  const icon = ProductUtils.getSaleIcon(product);
   const nameText = `${icon}${product.name}`;
 
   // DOM 업데이트
@@ -1109,7 +1097,7 @@ function doUpdatePricesInCart() {
   cartItems
     .map((cartItem) => ({
       cartItem,
-      product: domainUtils.findProductById(cartItem.id),
+      product: ProductUtils.findProductById(cartItem.id, productStore.getState().products),
     }))
     .filter(({ product }) => product)
     .forEach(({ cartItem, product }) => {
@@ -1119,10 +1107,6 @@ function doUpdatePricesInCart() {
   // 전체 계산 다시 실행
   handleCalculateCartStuff();
 }
-
-// 상품 아이콘 및 가격 표시 헬퍼 함수들 (import된 함수 사용)
-
-// 장바구니 아이템 HTML 생성 함수 (도메인 함수 사용)
 
 //main 실행
 main();
