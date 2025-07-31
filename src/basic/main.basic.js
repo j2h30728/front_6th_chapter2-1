@@ -302,49 +302,160 @@ const pointCalculator = {
   },
 };
 
-// 🏪 이벤트 시스템
+// 🏪 이벤트 시스템 - WeakMap, Set, Map 활용
 const eventSystem = {
-  // 이벤트 타입 상수
-  EVENT_TYPES: {
-    CART_ADD_ITEM: 'CART_ADD_ITEM',
-    CART_REMOVE_ITEM: 'CART_REMOVE_ITEM',
-    CART_UPDATE_QUANTITY: 'CART_UPDATE_QUANTITY',
-    MANUAL_TOGGLE: 'MANUAL_TOGGLE',
-    MANUAL_CLOSE: 'MANUAL_CLOSE',
-    PRODUCT_SELECT: 'PRODUCT_SELECT',
-    LIGHTNING_SALE: 'LIGHTNING_SALE',
-    RECOMMENDED_SALE: 'RECOMMENDED_SALE',
+  // WeakMap: 이벤트 엘리먼트 관리 (메모리 누수 방지)
+  eventElements: new WeakMap(),
+
+  // Set: 이벤트 타입 관리 (중복 방지)
+  eventTypes: new Set(['click', 'change', 'input', 'submit', 'keydown', 'keyup', 'focus', 'blur']),
+
+  // 이벤트 타입 동적 등록
+  registerEventType: (eventType) => {
+    eventSystem.eventTypes.add(eventType);
   },
 
-  // 이벤트 리스너 저장소
-  listeners: new Map(),
+  // 이벤트 타입 동적 제거
+  unregisterEventType: (eventType) => {
+    eventSystem.eventTypes.delete(eventType);
+  },
 
-  // 이벤트 등록
-  on: (eventType, callback) => {
-    if (!eventSystem.listeners.has(eventType)) {
-      eventSystem.listeners.set(eventType, []);
+  // 이벤트 타입 존재 여부 확인
+  hasEventType: (eventType) => {
+    return eventSystem.eventTypes.has(eventType);
+  },
+
+  // 등록된 모든 이벤트 타입 조회
+  getRegisteredEventTypes: () => {
+    return Array.from(eventSystem.eventTypes);
+  },
+
+  // Map: 이벤트 핸들러 관리 (타입별 핸들러 그룹화)
+  eventHandlers: new Map(),
+
+  // 이벤트 위임을 위한 부모 요소 탐색
+  findEventTarget: (event, selector) => {
+    let target = event.target;
+    while (target && target !== event.currentTarget) {
+      if (target.matches(selector)) {
+        return target;
+      }
+      target = target.parentElement;
     }
-    eventSystem.listeners.get(eventType).push(callback);
+    // currentTarget도 확인 (매뉴얼 오버레이 같은 경우)
+    if (event.currentTarget.matches(selector)) {
+      return event.currentTarget;
+    }
+    return null;
   },
 
-  // 이벤트 발생
-  emit: (eventType, data) => {
-    const callbacks = eventSystem.listeners.get(eventType) || [];
-    callbacks.forEach((callback) => callback(data));
+  // 이벤트 핸들러 등록
+  registerHandler: (eventType, selector, handler) => {
+    // 이벤트 타입이 등록되지 않은 경우 자동 등록
+    if (!eventSystem.hasEventType(eventType)) {
+      eventSystem.registerEventType(eventType);
+    }
+
+    if (!eventSystem.eventHandlers.has(eventType)) {
+      eventSystem.eventHandlers.set(eventType, new Map());
+    }
+    eventSystem.eventHandlers.get(eventType).set(selector, handler);
+  },
+
+  // 이벤트 위임 핸들러 생성
+  createDelegatedHandler: (eventType) => {
+    return (event) => {
+      const handlers = eventSystem.eventHandlers.get(eventType);
+      if (!handlers) return;
+
+      for (const [selector, handler] of handlers) {
+        const target = eventSystem.findEventTarget(event, selector);
+        if (target) {
+          handler(event, target);
+          break;
+        }
+      }
+    };
+  },
+
+  // 이벤트 리스너 등록
+  attachEventListeners: (container) => {
+    eventSystem.eventElements.set(container, new Set());
+
+    for (const eventType of eventSystem.eventTypes) {
+      const delegatedHandler = eventSystem.createDelegatedHandler(eventType);
+      container.addEventListener(eventType, delegatedHandler);
+      eventSystem.eventElements.get(container).add(eventType);
+    }
+  },
+
+  // 특정 이벤트 타입 리스너 동적 등록
+  attachEventListener: (container, eventType) => {
+    if (!eventSystem.hasEventType(eventType)) {
+      eventSystem.registerEventType(eventType);
+    }
+
+    const attachedEvents = eventSystem.eventElements.get(container);
+    if (attachedEvents && !attachedEvents.has(eventType)) {
+      const delegatedHandler = eventSystem.createDelegatedHandler(eventType);
+      container.addEventListener(eventType, delegatedHandler);
+      attachedEvents.add(eventType);
+    }
+  },
+
+  // 특정 이벤트 타입 리스너 동적 제거
+  detachEventListener: (container, eventType) => {
+    const attachedEvents = eventSystem.eventElements.get(container);
+    if (attachedEvents && attachedEvents.has(eventType)) {
+      const delegatedHandler = eventSystem.createDelegatedHandler(eventType);
+      container.removeEventListener(eventType, delegatedHandler);
+      attachedEvents.delete(eventType);
+    }
   },
 
   // 이벤트 리스너 제거
-  off: (eventType, callback) => {
-    const callbacks = eventSystem.listeners.get(eventType) || [];
-    const index = callbacks.indexOf(callback);
-    if (index > -1) {
-      callbacks.splice(index, 1);
+  detachEventListeners: (container) => {
+    const attachedEvents = eventSystem.eventElements.get(container);
+    if (attachedEvents) {
+      for (const eventType of attachedEvents) {
+        const delegatedHandler = eventSystem.createDelegatedHandler(eventType);
+        container.removeEventListener(eventType, delegatedHandler);
+      }
+      eventSystem.eventElements.delete(container);
     }
   },
 
-  // 모든 이벤트 리스너 제거
-  clear: () => {
-    eventSystem.listeners.clear();
+  // 모든 이벤트 핸들러 제거
+  clearHandlers: () => {
+    eventSystem.eventHandlers.clear();
+  },
+
+  // 특정 이벤트 타입의 모든 핸들러 제거
+  clearHandlersForEventType: (eventType) => {
+    eventSystem.eventHandlers.delete(eventType);
+  },
+
+  // 특정 선택자의 핸들러 제거
+  removeHandler: (eventType, selector) => {
+    const handlers = eventSystem.eventHandlers.get(eventType);
+    if (handlers) {
+      handlers.delete(selector);
+      // 핸들러가 없으면 이벤트 타입도 제거
+      if (handlers.size === 0) {
+        eventSystem.eventHandlers.delete(eventType);
+      }
+    }
+  },
+
+  // 이벤트 시스템 상태 조회
+  getEventSystemStatus: () => {
+    return {
+      registeredEventTypes: eventSystem.getRegisteredEventTypes(),
+      totalHandlers: Array.from(eventSystem.eventHandlers.entries()).map(([eventType, handlers]) => ({
+        eventType,
+        handlerCount: handlers.size,
+      })),
+    };
   },
 };
 
@@ -352,14 +463,24 @@ const eventSystem = {
 const eventHandlers = {
   // 매뉴얼 토글 이벤트 핸들러
   handleManualToggle: () => {
-    eventSystem.emit(eventSystem.EVENT_TYPES.MANUAL_TOGGLE);
+    uiStore.dispatch({ type: 'TOGGLE_MANUAL_OVERLAY' });
+    const isVisible = uiStore.getState().isManualOverlayVisible;
+    uiRenderer.renderManualOverlay(isVisible);
   },
 
   // 매뉴얼 오버레이 배경 클릭 이벤트 핸들러
   handleManualOverlayClick: (event) => {
-    if (event.target === event.currentTarget) {
-      eventSystem.emit(eventSystem.EVENT_TYPES.MANUAL_CLOSE);
+    // 배경 클릭 시에만 모달 닫기 (event.target이 매뉴얼 오버레이 자체인 경우)
+    if (event.target.id === 'manual-overlay') {
+      uiStore.dispatch({ type: 'SET_MANUAL_OVERLAY_VISIBLE', payload: false });
+      uiRenderer.renderManualOverlay(false);
     }
+  },
+
+  // 매뉴얼 닫기 버튼 이벤트 핸들러
+  handleManualClose: () => {
+    uiStore.dispatch({ type: 'SET_MANUAL_OVERLAY_VISIBLE', payload: false });
+    uiRenderer.renderManualOverlay(false);
   },
 
   // 장바구니 추가 이벤트 핸들러
@@ -374,112 +495,111 @@ const eventHandlers = {
 
     const itemToAdd = ProductUtils.findProductById(selItem, productStore.getState().products);
     if (itemToAdd && itemToAdd.q > 0) {
-      eventSystem.emit(eventSystem.EVENT_TYPES.CART_ADD_ITEM, {
-        productId: itemToAdd.id,
-        quantity: 1,
-        product: itemToAdd,
-      });
+      const cartContainer = getElement('cart-items');
+      const existingItem = getElement(itemToAdd.id);
+
+      if (existingItem) {
+        // 기존 아이템 수량 증가
+        const currentQty = CartUtils.getQuantityFromCartItem(existingItem);
+        const newQty = currentQty + 1;
+        if (newQty <= itemToAdd.q + currentQty) {
+          CartUtils.setQuantityToCartItem(existingItem, newQty);
+          productStore.dispatch({
+            type: 'DECREASE_STOCK',
+            payload: { productId: itemToAdd.id, quantity: 1 },
+          });
+        } else {
+          alert('재고가 부족합니다.');
+          return;
+        }
+      } else {
+        // 새 아이템 추가
+        cartContainer.insertAdjacentHTML('beforeend', CartUtils.createCartItemHTML(itemToAdd));
+        productStore.dispatch({
+          type: 'DECREASE_STOCK',
+          payload: { productId: itemToAdd.id, quantity: 1 },
+        });
+      }
+
+      handleCalculateCartStuff();
+      cartStore.dispatch({ type: 'SET_LAST_SELECTED', payload: itemToAdd.id });
     }
   },
 
   // 장바구니 아이템 클릭 이벤트 핸들러
-  handleCartItemClick: (event) => {
-    const tgt = event.target;
-    if (tgt.classList.contains('quantity-change') || tgt.classList.contains('remove-item')) {
-      const prodId = tgt.dataset.productId;
-      const itemElem = getElement(prodId);
-      const prod = ProductUtils.findProductById(prodId, productStore.getState().products);
+  handleCartItemClick: (event, target) => {
+    const prodId = target.dataset.productId;
+    const itemElem = getElement(prodId);
+    const prod = ProductUtils.findProductById(prodId, productStore.getState().products);
 
-      if (tgt.classList.contains('quantity-change')) {
-        // 수량 변경
-        const qtyChange = safeParseInt(tgt.dataset.change);
-        const currentQty = CartUtils.getQuantityFromCartItem(itemElem);
-        const newQty = currentQty + qtyChange;
+    if (target.classList.contains('quantity-change')) {
+      // 수량 변경
+      const qtyChange = safeParseInt(target.dataset.change);
+      const currentQty = CartUtils.getQuantityFromCartItem(itemElem);
+      const newQty = currentQty + qtyChange;
 
-        if (newQty > 0 && newQty <= prod.q + currentQty) {
-          CartUtils.setQuantityToCartItem(itemElem, newQty);
-          productStore.dispatch({
-            type: 'DECREASE_STOCK',
-            payload: { productId: prodId, quantity: qtyChange },
-          });
-        } else if (newQty <= 0) {
-          productStore.dispatch({
-            type: 'INCREASE_STOCK',
-            payload: { productId: prodId, quantity: currentQty },
-          });
-          itemElem.remove();
-        } else {
-          alert('재고가 부족합니다.');
-        }
-      } else if (tgt.classList.contains('remove-item')) {
-        // 아이템 제거
-        const remQty = CartUtils.getQuantityFromCartItem(itemElem);
+      if (newQty > 0 && newQty <= prod.q + currentQty) {
+        CartUtils.setQuantityToCartItem(itemElem, newQty);
+        productStore.dispatch({
+          type: 'DECREASE_STOCK',
+          payload: { productId: prodId, quantity: qtyChange },
+        });
+      } else if (newQty <= 0) {
         productStore.dispatch({
           type: 'INCREASE_STOCK',
-          payload: { productId: prodId, quantity: remQty },
+          payload: { productId: prodId, quantity: currentQty },
         });
         itemElem.remove();
+      } else {
+        alert('재고가 부족합니다.');
       }
-
-      handleCalculateCartStuff();
-      onUpdateSelectOptions();
+    } else if (target.classList.contains('remove-item')) {
+      // 아이템 제거
+      const remQty = CartUtils.getQuantityFromCartItem(itemElem);
+      productStore.dispatch({
+        type: 'INCREASE_STOCK',
+        payload: { productId: prodId, quantity: remQty },
+      });
+      itemElem.remove();
     }
+
+    handleCalculateCartStuff();
+    onUpdateSelectOptions();
+  },
+
+  // 장바구니 아이템 호버 이벤트 핸들러 (동적 이벤트 타입 예제)
+  handleCartItemHover: (event, target) => {
+    target.style.transform = 'scale(1.02)';
+    target.style.transition = 'transform 0.2s ease';
+  },
+
+  // 장바구니 아이템 호버 아웃 이벤트 핸들러 (동적 이벤트 타입 예제)
+  handleCartItemLeave: (event, target) => {
+    target.style.transform = 'scale(1)';
   },
 
   // 이벤트 리스너 등록
   registerEventListeners: () => {
-    const manualToggle = getElement('manual-toggle');
-    const manualOverlay = getElement('manual-overlay');
-    const addBtn = getElement('add-to-cart');
-    const cartDisp = getElement('cart-items');
+    const appContainer = getElement('app');
 
-    manualToggle.onclick = eventHandlers.handleManualToggle;
-    manualOverlay.onclick = eventHandlers.handleManualOverlayClick;
-    addBtn.addEventListener('click', eventHandlers.handleAddToCart);
-    cartDisp.addEventListener('click', eventHandlers.handleCartItemClick);
+    // 이벤트 위임 핸들러 등록
+    eventSystem.registerHandler('click', '#manual-toggle', eventHandlers.handleManualToggle);
+    eventSystem.registerHandler('click', '#manual-overlay', eventHandlers.handleManualOverlayClick);
+    eventSystem.registerHandler('click', '#manual-close', eventHandlers.handleManualClose);
+    eventSystem.registerHandler('click', '#add-to-cart', eventHandlers.handleAddToCart);
+    eventSystem.registerHandler('click', '.quantity-change', eventHandlers.handleCartItemClick);
+    eventSystem.registerHandler('click', '.remove-item', eventHandlers.handleCartItemClick);
 
-    // 이벤트 시스템 리스너 등록
-    eventSystem.on(eventSystem.EVENT_TYPES.MANUAL_TOGGLE, () => {
-      uiStore.dispatch({ type: 'TOGGLE_MANUAL_OVERLAY' });
-      const isVisible = uiStore.getState().isManualOverlayVisible;
-      uiRenderer.renderManualOverlay(isVisible);
-    });
+    // 동적 이벤트 타입 등록 예제
+    eventSystem.registerEventType('mouseenter');
+    eventSystem.registerEventType('mouseleave');
 
-    eventSystem.on(eventSystem.EVENT_TYPES.MANUAL_CLOSE, () => {
-      uiStore.dispatch({ type: 'SET_MANUAL_OVERLAY_VISIBLE', payload: false });
-      uiRenderer.renderManualOverlay(false);
-    });
+    // 동적으로 등록된 이벤트 타입에 대한 핸들러 등록
+    eventSystem.registerHandler('mouseenter', '.cart-item', eventHandlers.handleCartItemHover);
+    eventSystem.registerHandler('mouseleave', '.cart-item', eventHandlers.handleCartItemLeave);
 
-    eventSystem.on(eventSystem.EVENT_TYPES.CART_ADD_ITEM, (data) => {
-      const { productId, quantity, product } = data;
-      const item = getElement(productId);
-
-      if (item) {
-        // 기존 아이템 수량 증가
-        const currentQty = CartUtils.getQuantityFromCartItem(item);
-        const newQty = currentQty + quantity;
-        if (newQty <= product.q + currentQty) {
-          CartUtils.setQuantityToCartItem(item, newQty);
-          productStore.dispatch({
-            type: 'DECREASE_STOCK',
-            payload: { productId, quantity },
-          });
-        } else {
-          alert('재고가 부족합니다.');
-        }
-      } else {
-        // 새 아이템 추가
-        const cartContainer = getElement('cart-items');
-        cartContainer.insertAdjacentHTML('beforeend', CartUtils.createCartItemHTML(product));
-        productStore.dispatch({
-          type: 'DECREASE_STOCK',
-          payload: { productId, quantity },
-        });
-      }
-
-      handleCalculateCartStuff();
-      cartStore.dispatch({ type: 'SET_LAST_SELECTED', payload: productId });
-    });
+    // 이벤트 위임 리스너 등록
+    eventSystem.attachEventListeners(appContainer);
   },
 };
 
@@ -513,7 +633,7 @@ function main() {
   // 🔍 Observers 활성화 - DOM 준비 후
   setupObservers(cartStore, productStore, uiStore, uiRenderer);
 
-  // 이벤트 리스너 등록
+  // 이벤트 위임 리스너 등록
   eventHandlers.registerEventListeners();
 
   onUpdateSelectOptions();

@@ -2,7 +2,7 @@
 export const createManualOverlay = () => /*html*/ `
   <div id="manual-overlay" class="fixed inset-0 bg-black/50 z-40 hidden transition-opacity duration-300">
     <div id="manual-column" class="fixed right-0 top-0 h-full w-80 bg-white shadow-2xl p-6 overflow-y-auto z-50 transform translate-x-full transition-transform duration-300">
-      <button class="absolute top-4 right-4 text-gray-500 hover:text-black" onclick="document.querySelector('#manual-overlay').classList.add('hidden'); document.querySelector('#manual-column').classList.add('translate-x-full')">
+      <button id="manual-close" class="absolute top-4 right-4 text-gray-500 hover:text-black">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
         </svg>
