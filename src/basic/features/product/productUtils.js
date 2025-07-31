@@ -1,3 +1,5 @@
+import { STOCK_CALCULATION } from '../../constants/index.js';
+
 /**
  * 상품 도메인 유틸리티 객체
  */
@@ -49,11 +51,11 @@ export const ProductUtils = {
    * @returns {string|null} 재고 메시지 또는 null
    */
   createStockMessage(item) {
-    if (item.stockQuantity === 0) {
+    if (item.stockQuantity === STOCK_CALCULATION.ZERO_STOCK) {
       return `${item.name}: 품절`;
     }
 
-    if (item.stockQuantity < 5) {
+    if (item.stockQuantity < STOCK_CALCULATION.LOW_STOCK_THRESHOLD) {
       return `${item.name}: 재고 부족 (${item.stockQuantity}개 남음)`;
     }
 

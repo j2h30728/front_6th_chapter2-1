@@ -106,3 +106,19 @@ export const TIMER_SETTINGS = {
   RECOMMENDED_SALE_INTERVAL: 60000, // 60초
   RECOMMENDED_SALE_DELAY_MAX: 20000, // 최대 20초 지연
 };
+
+// 포인트 계산 상수
+export const POINT_CALCULATION = {
+  POINTS_PER_THOUSAND: 1000, // 1000원당 포인트 계산 기준
+};
+
+// 타이머 관련 상수
+export const TIMER_CALCULATION = {
+  RANDOM_MULTIPLIER: 1, // Math.random() 곱셈 계수
+};
+
+// 재고 관련 상수
+export const STOCK_CALCULATION = {
+  LOW_STOCK_THRESHOLD: 5, // 재고 부족 기준
+  ZERO_STOCK: 0, // 품절 기준
+};

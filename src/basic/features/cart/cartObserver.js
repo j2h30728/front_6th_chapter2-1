@@ -1,3 +1,4 @@
+import { POINT_CALCULATION } from '../../constants/index.js';
 import createObserver from '../../utils/createObserver.js';
 import { formatPrice } from '../../utils/dataUtils.js';
 import { getElement, setTextContent } from '../../utils/domUtils.js';
@@ -20,7 +21,7 @@ export const createCartObserver = (cartStore) => {
     totalDiv.textContent = formatPrice(state.totalAmount);
 
     // 포인트 업데이트
-    const points = Math.floor(state.totalAmount / 1000);
+    const points = Math.floor(state.totalAmount / POINT_CALCULATION.POINTS_PER_THOUSAND);
     const pointsDisplay = points > 0 ? `적립 포인트: ${points}p` : '적립 포인트: 0p';
     const loyaltyPointsDiv = getElement('loyalty-points');
     if (!loyaltyPointsDiv) return;
