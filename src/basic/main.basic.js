@@ -231,8 +231,8 @@ const doRenderBonusPoints = function () {
 
 // 💰 가격 업데이트 헬퍼 함수
 const updateCartItemPrice = (cartItem, product) => {
-  const priceDiv = cartItem.querySelector('.text-lg');
-  const nameDiv = cartItem.querySelector('h3');
+  const priceDiv = cartItem.querySelector('.cart-item-price');
+  const nameDiv = cartItem.querySelector('.cart-item-name');
 
   // 가격 HTML 생성
   const priceHTML = ProductUtils.getPriceHTML(product);
@@ -242,8 +242,12 @@ const updateCartItemPrice = (cartItem, product) => {
   const nameText = `${icon}${product.name}`;
 
   // DOM 업데이트
-  priceDiv.innerHTML = priceHTML;
-  nameDiv.textContent = nameText;
+  if (priceDiv) {
+    priceDiv.innerHTML = priceHTML;
+  }
+  if (nameDiv) {
+    nameDiv.textContent = nameText;
+  }
 };
 
 // 🎨 포인트 관련 HTML 헬퍼 함수

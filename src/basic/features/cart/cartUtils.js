@@ -13,8 +13,8 @@ export const CartUtils = {
    * @returns {number} 수량
    */
   getQuantityFromCartItem(cartItem) {
-    const qtyElem = cartItem.querySelector('.quantity-number');
-    return parseInt(qtyElem.textContent) || 0;
+    const qtyElem = cartItem.querySelector('.cart-item-content .quantity-number');
+    return qtyElem ? parseInt(qtyElem.textContent) || 0 : 0;
   },
 
   /**
@@ -23,8 +23,10 @@ export const CartUtils = {
    * @param {number} quantity - 설정할 수량
    */
   setQuantityToCartItem(cartItem, quantity) {
-    const qtyElem = cartItem.querySelector('.quantity-number');
-    qtyElem.textContent = quantity;
+    const qtyElem = cartItem.querySelector('.cart-item-content .quantity-number');
+    if (qtyElem) {
+      qtyElem.textContent = quantity;
+    }
   },
 
   /**
@@ -45,8 +47,8 @@ export const CartUtils = {
           <div class="absolute top-1/2 left-1/2 w-[60%] h-[60%] bg-white/10 -translate-x-1/2 -translate-y-1/2 rotate-45"></div>
         </div>
 
-        <div>
-          <h3 class="text-base font-normal mb-1 tracking-tight">${icon}${item.name}</h3>
+        <div class="cart-item-content">
+          <h3 class="cart-item-name text-base font-normal mb-1 tracking-tight">${icon}${item.name}</h3>
           <p class="text-xs text-gray-500 mb-0.5 tracking-wide">PRODUCT</p>
           <p class="text-xs text-black mb-3">${priceHTML}</p>
 
@@ -65,8 +67,8 @@ export const CartUtils = {
           </div>
         </div>
 
-        <div class="text-right">
-          <div class="text-lg mb-2 tracking-tight tabular-nums">${priceHTML}</div>
+        <div class="cart-item-price-container text-right">
+          <div class="cart-item-price text-lg mb-2 tracking-tight tabular-nums">${priceHTML}</div>
           <a
             class="remove-item text-2xs text-gray-500 uppercase tracking-wider cursor-pointer transition-colors border-b border-transparent hover:text-black hover:border-black"
             data-product-id="${item.id}"

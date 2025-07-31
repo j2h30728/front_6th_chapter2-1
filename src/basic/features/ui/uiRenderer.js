@@ -1,6 +1,6 @@
 // 🏪 UI 렌더링 모듈 (React 스타일)
 import { UI_CONSTANTS } from '../../constants/index.js';
-import { formatNumber, formatPrice, when, whenValue } from '../../utils/dataUtils.js';
+import { formatNumber, when, whenValue } from '../../utils/dataUtils.js';
 import { getElement, querySelector, setInnerHTML, setStyle, setTextContent } from '../../utils/domUtils.js';
 import { CartUtils } from '../cart/cartUtils.js';
 
@@ -9,9 +9,9 @@ const uiRenderer = {
   renderCartDisplay: (totalItems, finalTotal) => {
     setTextContent('item-count', `🛍️ ${totalItems} items in cart`);
 
-    const totalDiv = querySelector(getElement('cart-total'), '.text-2xl');
+    const totalDiv = querySelector(getElement('cart-total'), '.cart-total-amount');
     if (totalDiv) {
-      totalDiv.textContent = formatPrice(finalTotal);
+      totalDiv.textContent = `₩${finalTotal.toLocaleString()}`;
     }
   },
 
@@ -61,12 +61,11 @@ const uiRenderer = {
   renderCartItemStyles: (cartItems) => {
     Array.from(cartItems).forEach((cartItem) => {
       const quantity = CartUtils.getQuantityFromCartItem(cartItem);
-      const priceElems = cartItem.querySelectorAll('.text-lg, .text-xs');
+      // 실제 HTML 구조에 맞는 클래스명을 사용하여 가격 요소를 선택
+      const priceElems = cartItem.querySelectorAll('.cart-item-price');
 
       priceElems.forEach((elem) => {
-        if (elem.classList.contains('text-lg')) {
-          elem.style.fontWeight = whenValue(quantity >= UI_CONSTANTS.QUANTITY_THRESHOLD_FOR_BOLD, 'bold', 'normal');
-        }
+        elem.style.fontWeight = whenValue(quantity >= UI_CONSTANTS.QUANTITY_THRESHOLD_FOR_BOLD, 'bold', 'normal');
       });
     });
   },

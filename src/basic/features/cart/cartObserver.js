@@ -14,7 +14,7 @@ export const createCartObserver = (cartStore) => {
     setTextContent('item-count', `🛍️ ${state.itemCnt} items in cart`);
 
     // 총액 변경 시 UI 업데이트
-    const totalDiv = querySelector(getElement('cart-total'), '.text-2xl');
+    const totalDiv = querySelector(getElement('cart-total'), '.cart-total-amount');
     if (totalDiv) {
       totalDiv.textContent = formatPrice(state.totalAmt);
     }
