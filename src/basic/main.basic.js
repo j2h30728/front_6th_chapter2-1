@@ -1,16 +1,18 @@
-import { createBulkDiscountHTML } from './components/BulkDiscount.js';
-import { createCartItems } from './components/CartItems.js';
 // 🧩 컴포넌트 imports
-import { createHeader } from './components/Header.js';
-import { createItemDiscountHTML } from './components/ItemDiscount.js';
-import { createManualOverlay } from './components/ManualOverlay.js';
-import { createManualToggleButton } from './components/ManualToggle.js';
-import { createProductSelector } from './components/ProductSelector.js';
-import { createRightColumn } from './components/RightColumn.js';
-import { createShippingHTML } from './components/Shipping.js';
-import { createSummaryItemHTML } from './components/SummaryItem.js';
-import { createSummarySubtotalHTML } from './components/SummarySubtotal.js';
-import { createTuesdayDiscountHTML } from './components/TuesdayDiscount.js';
+import {
+  createBulkDiscountHTML,
+  createCartItems,
+  createHeader,
+  createItemDiscountHTML,
+  createManualOverlay,
+  createManualToggleButton,
+  createProductSelector,
+  createRightColumn,
+  createShippingHTML,
+  createSummaryItemHTML,
+  createSummarySubtotalHTML,
+  createTuesdayDiscountHTML,
+} from './components/index.js';
 // 🏪 상수들 import
 import {
   DISCOUNT_POLICIES,
@@ -21,16 +23,19 @@ import {
   TIMER_SETTINGS,
   UI_CONSTANTS,
 } from './constants/index.js';
-import cartStore from './features/cart/cartStore.js';
-// 🛠️ 순수 유틸리티 함수들 import
-import { CartUtils } from './features/cart/cartUtils.js';
-import { registerEventListeners } from './features/events/eventRegistry.js';
-import { setupObservers } from './features/observerFactory.js';
-import createProductStore from './features/product/productStore.js';
-import { ProductUtils } from './features/product/productUtils.js';
-import uiRenderer from './features/ui/uiRenderer.js';
-import uiStore from './features/ui/uiStore.js';
-import { getElement } from './utils/domUtils.js';
+// 🏪 기능 모듈 imports
+import {
+  cartStore,
+  CartUtils,
+  createProductStore,
+  ProductUtils,
+  registerEventListeners,
+  setupObservers,
+  uiRenderer,
+  uiStore,
+} from './features/index.js';
+// 🛠️ 유틸리티 imports
+import { getElement } from './utils/index.js';
 
 // 🏪 데이터 변환 함수들
 const transformServerDataToClientState = (serverData) => {
