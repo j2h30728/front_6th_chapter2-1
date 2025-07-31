@@ -39,6 +39,17 @@ const productStore = createProductStore({
   products: createInitialProductState(),
 });
 
+// 📅 날짜 관련 상수
+const DAYS_OF_WEEK = {
+  TUESDAY: 2,
+};
+
+// 🎨 UI 관련 상수
+const UI_STYLES = {
+  HIDDEN: 'none',
+  VISIBLE: 'block',
+};
+
 // 🧩 컴포넌트 조합 함수
 const createMainContent = () => /*html*/ `
   <div class="bg-white border border-gray-200 p-8 overflow-y-auto">
@@ -58,30 +69,7 @@ const createApp = () => /*html*/ `
   ${createManualOverlay()}
 `;
 
-function main() {
-  cartStore.dispatch({ type: 'RESET_CART' });
-
-  const root = document.getElementById('app');
-
-  // 컴포넌트 조합으로 앱 렌더링
-  root.innerHTML = createApp();
-
-  // 🔍 Observers 활성화 - DOM 준비 후
-  setupObservers(cartStore, productStore, uiStore, uiRenderer);
-
-  // 이벤트 위임 리스너 등록
-  registerEventListeners(handleCalculateCartStuff, onUpdateSelectOptions, cartStore, productStore, uiStore);
-
-  onUpdateSelectOptions();
-  handleCalculateCartStuff();
-
-  // 🏪 세일 서비스 시작
-  saleService.startAllSales(cartStore, productStore, onUpdateSelectOptions, doUpdatePricesInCart);
-}
-
-// 📦 재고 상태 헬퍼 함수 (도메인 함수 사용)
-
-// 📊 계산 로직 함수들 - 순수 함수로 분리
+// 📊 계산 로직 함수들
 const calculateCartItems = (cartItems) => {
   const cartData = Array.from(cartItems).reduce(
     (acc, cartItem) => {
@@ -113,7 +101,6 @@ const calculateTotalPoints = (finalTotal, cartItems, totalItems, isTuesday) => {
 const updateCartDisplay = (totalItems, finalTotal) => {
   cartStore.dispatch({ type: 'SET_TOTAL_AMOUNT', payload: finalTotal });
   cartStore.dispatch({ type: 'SET_ITEM_COUNT', payload: totalItems });
-
   uiRenderer.renderCartDisplay(totalItems, finalTotal);
 };
 
@@ -128,14 +115,13 @@ const updateSummaryDetails = (cartItems, subtotal, itemDiscounts, bulkDiscount, 
     return;
   }
 
-  const summaryItems = Array.from(cartItems).map((cartItem) => {
+  const summaryItems = cartItems.map((cartItem) => {
     const curItem = ProductUtils.findProductById(cartItem.id, productStore.getState().products);
     const quantity = CartUtils.getQuantityFromCartItem(cartItem);
     return createSummaryItemHTML(curItem, quantity);
   });
 
   const discountItems = bulkDiscount > 0 ? [createBulkDiscountHTML()] : itemDiscounts.map(createItemDiscountHTML);
-
   const specialItems = isTuesday && finalTotal > 0 ? [createTuesdayDiscountHTML()] : [];
 
   const allItems = [
@@ -173,75 +159,76 @@ const updateCartItemStyles = (cartItems) => {
   uiRenderer.renderCartItemStyles(cartItems);
 };
 
-// 🎯 메인 계산 함수 - 이제 조율자 역할만 수행
-function handleCalculateCartStuff() {
+// 🎨 포인트 관련 HTML 헬퍼 함수
+const createBonusPointsHTML = (points, details) => /*html*/ `
+  <div>적립 포인트: <span class="font-bold">${points}p</span></div>
+  <div class="text-2xs opacity-70 mt-1">${details.join(', ')}</div>
+`;
+
+// 🎯 포인트 렌더링 관련 함수들
+const getCurrentTuesdayStatus = () => {
+  return new Date().getDay() === DAYS_OF_WEEK.TUESDAY;
+};
+
+const getCartState = () => {
   const cartDisp = getElement('cart-items');
-  const cartItems = cartDisp.children;
+  if (!cartDisp) {
+    return {
+      cartItems: [],
+      totalAmount: 0,
+      totalItems: 0,
+    };
+  }
 
-  // 1. 장바구니 아이템 계산
-  const { subtotal, totalItems, itemDiscounts } = calculateCartItems(cartItems);
+  const cartItems = Array.from(cartDisp.children);
+  return {
+    cartItems,
+    totalAmount: cartStore.getState().totalAmt,
+    totalItems: cartStore.getState().itemCnt,
+  };
+};
 
-  // 2. 최종 총액 계산
-  const { finalTotal, isTuesday, bulkDiscount } = calculateFinalTotal(subtotal, itemDiscounts, totalItems);
+const renderPointsDisplay = (ptsTag, finalPoints, pointsDetail) => {
+  if (!ptsTag) return;
 
-  // 3. 포인트 계산
-  const totalPoints = calculateTotalPoints(finalTotal, Array.from(cartItems), totalItems, isTuesday);
+  if (finalPoints > 0) {
+    ptsTag.innerHTML = createBonusPointsHTML(finalPoints, pointsDetail);
+  } else {
+    ptsTag.textContent = '적립 포인트: 0p';
+  }
+  ptsTag.style.display = UI_STYLES.VISIBLE;
+};
 
-  // 4. UI 업데이트
-  updateCartDisplay(totalItems, finalTotal);
-  updateTuesdaySpecialDisplay(isTuesday, finalTotal);
-  updateSummaryDetails(cartItems, subtotal, itemDiscounts, bulkDiscount, isTuesday, finalTotal);
-  updatePointsDisplay(totalPoints);
-  updateDiscountInfo(subtotal, finalTotal);
-  updateStockMessages();
-  updateCartItemStyles(cartItems);
-
-  // 5. 보너스 포인트 렌더링
-  doRenderBonusPoints();
-}
-
-const doRenderBonusPoints = function () {
+const doRenderBonusPoints = () => {
   const ptsTag = getElement('loyalty-points');
   if (!ptsTag) return;
 
   const cartDisp = getElement('cart-items');
-  if (cartDisp.children.length === 0) {
-    ptsTag.style.display = 'none';
+  if (!cartDisp || cartDisp.children.length === 0) {
+    ptsTag.style.display = UI_STYLES.HIDDEN;
     return;
   }
 
-  const cartItems = Array.from(cartDisp.children);
-  const totalAmount = cartStore.getState().totalAmt;
-  const totalItems = cartStore.getState().itemCnt;
-  const isTuesday = new Date().getDay() === 2;
+  const { cartItems, totalAmount, totalItems } = getCartState();
+  const isTuesday = getCurrentTuesdayStatus();
 
   const finalPoints = calculateTotalPoints(totalAmount, cartItems, totalItems, isTuesday);
   const pointsDetail = pointService.createPointsDetail(totalAmount, cartItems, totalItems, isTuesday, productStore);
 
-  if (finalPoints > 0) {
-    ptsTag.innerHTML = createBonusPointsHTML(finalPoints, pointsDetail);
-    ptsTag.style.display = 'block';
-  } else {
-    ptsTag.textContent = '적립 포인트: 0p';
-    ptsTag.style.display = 'block';
-  }
+  renderPointsDisplay(ptsTag, finalPoints, pointsDetail);
 };
-
-// 재고 메시지 생성 헬퍼 함수 (이미 위에 정의됨)
 
 // 💰 가격 업데이트 헬퍼 함수
 const updateCartItemPrice = (cartItem, product) => {
+  if (!cartItem || !product) return;
+
   const priceDiv = cartItem.querySelector('.cart-item-price');
   const nameDiv = cartItem.querySelector('.cart-item-name');
 
-  // 가격 HTML 생성
   const priceHTML = ProductUtils.getPriceHTML(product);
-
-  // 이름에 아이콘 추가
   const icon = ProductUtils.getSaleIcon(product);
   const nameText = `${icon}${product.name}`;
 
-  // DOM 업데이트
   if (priceDiv) {
     priceDiv.innerHTML = priceHTML;
   }
@@ -250,17 +237,69 @@ const updateCartItemPrice = (cartItem, product) => {
   }
 };
 
-// 🎨 포인트 관련 HTML 헬퍼 함수
-const createBonusPointsHTML = (points, details) => /*html*/ `
-  <div>적립 포인트: <span class="font-bold">${points}p</span></div>
-  <div class="text-2xs opacity-70 mt-1">${details.join(', ')}</div>
-`;
+// 🏪 옵션 업데이트 함수
+const onUpdateSelectOptions = () => {
+  optionService.updateSelectOptions(productStore, ProductUtils, UI_CONSTANTS);
+};
 
-function doUpdatePricesInCart() {
+// 🎯 메인 계산 함수들
+const calculateCartData = () => {
   const cartDisp = getElement('cart-items');
+  if (!cartDisp) {
+    return {
+      subtotal: 0,
+      totalItems: 0,
+      itemDiscounts: [],
+      finalTotal: 0,
+      isTuesday: false,
+      bulkDiscount: 0,
+      totalPoints: 0,
+      cartItems: [],
+    };
+  }
+
+  const cartItems = cartDisp.children;
+  const { subtotal, totalItems, itemDiscounts } = calculateCartItems(cartItems);
+  const { finalTotal, isTuesday, bulkDiscount } = calculateFinalTotal(subtotal, itemDiscounts, totalItems);
+  const cartItemsArray = Array.from(cartItems);
+  const totalPoints = calculateTotalPoints(finalTotal, cartItemsArray, totalItems, isTuesday);
+
+  return {
+    subtotal,
+    totalItems,
+    itemDiscounts,
+    finalTotal,
+    isTuesday,
+    bulkDiscount,
+    totalPoints,
+    cartItems: cartItemsArray,
+  };
+};
+
+const updateAllUI = (cartData) => {
+  const { totalItems, finalTotal, isTuesday, subtotal, itemDiscounts, bulkDiscount, totalPoints, cartItems } = cartData;
+
+  updateCartDisplay(totalItems, finalTotal);
+  updateTuesdaySpecialDisplay(isTuesday, finalTotal);
+  updateSummaryDetails(cartItems, subtotal, itemDiscounts, bulkDiscount, isTuesday, finalTotal);
+  updatePointsDisplay(totalPoints);
+  updateDiscountInfo(subtotal, finalTotal);
+  updateStockMessages();
+  updateCartItemStyles(cartItems);
+};
+
+const handleCalculateCartStuff = () => {
+  const cartData = calculateCartData();
+  updateAllUI(cartData);
+  doRenderBonusPoints();
+};
+
+const doUpdatePricesInCart = () => {
+  const cartDisp = getElement('cart-items');
+  if (!cartDisp) return;
+
   const cartItems = Array.from(cartDisp.children);
 
-  // 각 장바구니 아이템의 가격 정보 업데이트
   cartItems
     .map((cartItem) => ({
       cartItem,
@@ -271,14 +310,23 @@ function doUpdatePricesInCart() {
       updateCartItemPrice(cartItem, product);
     });
 
-  // 전체 계산 다시 실행
   handleCalculateCartStuff();
-}
-
-// 🏪 옵션 업데이트 함수
-const onUpdateSelectOptions = () => {
-  optionService.updateSelectOptions(productStore, ProductUtils, UI_CONSTANTS);
 };
 
-//main 실행
+// 🚀 앱 초기화 함수
+function main() {
+  cartStore.dispatch({ type: 'RESET_CART' });
+
+  const root = document.getElementById('app');
+  root.innerHTML = createApp();
+
+  setupObservers(cartStore, productStore, uiStore, uiRenderer);
+  registerEventListeners(handleCalculateCartStuff, onUpdateSelectOptions, cartStore, productStore, uiStore);
+
+  onUpdateSelectOptions();
+  handleCalculateCartStuff();
+  saleService.startAllSales(cartStore, productStore, onUpdateSelectOptions, doUpdatePricesInCart);
+}
+
+// 앱 실행
 main();
